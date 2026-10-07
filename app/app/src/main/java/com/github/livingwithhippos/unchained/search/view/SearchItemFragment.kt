@@ -85,7 +85,20 @@ class SearchItemFragment : UnchainedFragment(), LinkItemListener {
         }
         context?.showToast(R.string.loading_torrent_file)
         lifecycleScope.launch {
-            when (debridLinkRepository.addMagnet(url)) {
+            val result = if (url.startsWith("http://", ignoreCase = true) || url.startsWith("https://", ignoreCase = true)) {
+                if (url.endsWith(".torrent", ignoreCase = true)) {
+                    debridLinkRepository.addMagnet(url)
+                } else {
+                    when (val hostRes = debridLinkRepository.addHostLink(url)) {
+                        is EitherResult.Success -> EitherResult.Success(hostRes.success.id)
+                        is EitherResult.Failure -> EitherResult.Failure(hostRes.failure)
+                    }
+                }
+            } else {
+                debridLinkRepository.addMagnet(url)
+            }
+
+            when (result) {
                 is EitherResult.Success -> {
                     context?.showToast(R.string.debrid_link_add_success)
                 }

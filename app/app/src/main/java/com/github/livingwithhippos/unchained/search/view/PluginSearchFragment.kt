@@ -249,6 +249,19 @@ class PluginSearchFragment : UnchainedFragment(), SearchItemListener {
             submitSortedList(adapter, searchResultsList)
         }
 
+        binding.categoryChipGroup.setOnCheckedStateChangeListener { _, checkedIds ->
+            val selectedId = checkedIds.firstOrNull() ?: R.id.chipAll
+            val cat = when (selectedId) {
+                R.id.chipVideo -> "video"
+                R.id.chipMusic -> "music"
+                R.id.chipText -> "text"
+                R.id.chipOther -> "other"
+                else -> "all"
+            }
+            viewModel.saveSearchCategory(cat)
+            submitSortedList(adapter, filterByCategory(searchResultsList, cat))
+        }
+
         binding.bStartSearch.setOnClickListener {
             val query: String = binding.tiSearch.text?.toString()?.trim() ?: ""
             if (query.isBlank()) {
@@ -264,11 +277,13 @@ class PluginSearchFragment : UnchainedFragment(), SearchItemListener {
                 when (result) {
                     is ParserResult.SingleResult -> {
                         searchResultsList.add(result.value)
-                        submitSortedList(adapter, searchResultsList)
+                        val cat = viewModel.getSearchCategory()
+                        submitSortedList(adapter, filterByCategory(searchResultsList, cat))
                     }
                     is ParserResult.Results -> {
                         searchResultsList.addAll(result.values)
-                        submitSortedList(adapter, searchResultsList)
+                        val cat = viewModel.getSearchCategory()
+                        submitSortedList(adapter, filterByCategory(searchResultsList, cat))
                     }
                     is ParserResult.SearchStarted -> {
                         Timber.d("Search started")
@@ -288,6 +303,31 @@ class PluginSearchFragment : UnchainedFragment(), SearchItemListener {
                         Timber.d("Unknown result: $result")
                     }
                 }
+            }
+        }
+    }
+
+    private fun filterByCategory(items: List<ScrapedItem>, category: String): List<ScrapedItem> {
+        val cat = category.lowercase()
+        if (cat == "all") return items
+        return items.filter { item ->
+            val name = item.name.lowercase()
+            when (cat) {
+                "video" -> name.endsWith(".mkv") || name.endsWith(".mp4") || name.endsWith(".avi") ||
+                    name.contains("1080p") || name.contains("720p") || name.contains("2160p") ||
+                    name.contains("4k") || name.contains("bluray") || name.contains("web-dl") ||
+                    name.contains("hdtv") || name.contains("s0") || name.contains("season")
+                "music" -> name.endsWith(".mp3") || name.endsWith(".flac") || name.endsWith(".wav") ||
+                    name.endsWith(".m4a") || name.contains("discography") || name.contains("album") ||
+                    name.contains("flac") || name.contains("320kbps")
+                "text" -> name.endsWith(".pdf") || name.endsWith(".epub") || name.endsWith(".mobi") ||
+                    name.endsWith(".cbr") || name.endsWith(".cbz") || name.endsWith(".txt") ||
+                    name.endsWith(".iso") || name.endsWith(".zip") || name.endsWith(".tar") ||
+                    name.contains("linux") || name.contains("bible") || name.contains("book")
+                "other" -> !filterByCategory(listOf(item), "video").contains(item) &&
+                    !filterByCategory(listOf(item), "music").contains(item) &&
+                    !filterByCategory(listOf(item), "text").contains(item)
+                else -> true
             }
         }
     }

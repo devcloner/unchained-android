@@ -18,6 +18,8 @@
     <string name="send_to_real_debrid" translatable="false">Download with Real-Debrid</string>
     <string name="torrent_search_providers" translatable="false">Torrent search providers</string>
     <string name="auth_with_debrid_link" translatable="false">Authenticated with Debrid-Link</string>
+    <string name="get_api_here" translatable="false">Get API Key Here</string>
+    <string name="debrid_link_api_key_page_hint" translatable="false">Debrid-Link active. Tap here or button below to get or manage your API key.</string>
     <string name="google" translatable="false">Google</string>
     <string name="cloudflare" translatable="false">Cloudflare</string>
     <string name="quad9" translatable="false">Quad9</string>

@@ -61,36 +61,45 @@ class UserProfileFragment : UnchainedFragment() {
             preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.REAL_DEBRID.id) ==
                 DebridProvider.DEBRID_LINK.id || debridLinkRepository.isConfigured()
 
-        if (isDebridLink && debridLinkRepository.isConfigured()) {
+        if (isDebridLink) {
             binding.tvDescription.text = getString(R.string.auth_with_debrid_link)
-            binding.tvLoginDescription.text = getString(R.string.auth_with_debrid_link)
-            binding.bAccount.text = "Debrid-Link"
-            binding.bAccount.setOnClickListener {
-                context?.openExternalWebPage("https://debrid-link.com/webapp/seedbox")
+            binding.tvLoginDescription.text = getString(R.string.debrid_link_api_key_page_hint)
+            binding.tvLoginDescription.setOnClickListener {
+                context?.openExternalWebPage("https://debrid-link.com/webapp/apikey")
             }
-            lifecycleScope.launch {
-                when (val account = debridLinkRepository.getAccountInfos()) {
-                    is EitherResult.Success -> {
-                        val acc = account.success
-                        binding.tvName.text = acc.username ?: "Debrid-Link User"
-                        binding.tvMail.text = acc.email ?: ""
-                        val isPremium = (acc.accountType ?: 0) >= 1 || (acc.premiumLeft ?: 0L) > 0L
-                        if (isPremium) {
-                            binding.tvPremium.text = getString(R.string.premium)
-                        } else {
-                            binding.tvPremium.text = getString(R.string.not_premium)
+            binding.bAccount.text = getString(R.string.get_api_here)
+            binding.bAccount.setOnClickListener {
+                context?.openExternalWebPage("https://debrid-link.com/webapp/apikey")
+            }
+            if (debridLinkRepository.isConfigured()) {
+                lifecycleScope.launch {
+                    when (val account = debridLinkRepository.getAccountInfos()) {
+                        is EitherResult.Success -> {
+                            val acc = account.success
+                            binding.tvName.text = acc.username ?: "Debrid-Link User"
+                            binding.tvMail.text = acc.email ?: ""
+                            val isPremium = (acc.accountType ?: 0) >= 1 || (acc.premiumLeft ?: 0L) > 0L
+                            if (isPremium) {
+                                binding.tvPremium.text = getString(R.string.premium)
+                            } else {
+                                binding.tvPremium.text = getString(R.string.not_premium)
+                            }
+                            val days = ((acc.premiumLeft ?: 0L) / 86400L).coerceAtLeast(0L)
+                            val pts = (acc.points ?: 0L).toInt()
+                            binding.tvPremiumDays.text = getString(R.string.premium_days_format, days)
+                            binding.tvPoints.text = getString(R.string.premium_points_format, pts)
+                            binding.pointsBar.setProgressCompat(pts.coerceIn(0, 1000), true)
                         }
-                        val days = ((acc.premiumLeft ?: 0L) / 86400L).coerceAtLeast(0L)
-                        val pts = (acc.points ?: 0L).toInt()
-                        binding.tvPremiumDays.text = getString(R.string.premium_days_format, days)
-                        binding.tvPoints.text = getString(R.string.premium_points_format, pts)
-                        binding.pointsBar.setProgressCompat(pts.coerceIn(0, 1000), true)
-                    }
-                    is EitherResult.Failure -> {
-                        binding.tvName.text = "Debrid-Link"
-                        binding.tvPremium.text = getString(R.string.debrid_link_api_key_title)
+                        is EitherResult.Failure -> {
+                            binding.tvName.text = "Debrid-Link"
+                            binding.tvPremium.text = getString(R.string.debrid_link_api_key_title)
+                        }
                     }
                 }
+            } else {
+                binding.tvName.text = "Debrid-Link"
+                binding.tvMail.text = getString(R.string.debrid_link_no_key)
+                binding.tvPremium.text = getString(R.string.not_premium)
             }
         } else {
             val user: User? = activityViewModel.getCachedUser()
@@ -108,43 +117,44 @@ class UserProfileFragment : UnchainedFragment() {
                     binding.tvLoginDescription.text = getString(R.string.login_type_open)
                 }
             }
-        }
+            binding.bAccount.setOnClickListener {
+                if (_binding == null) return@setOnClickListener
+                // if we never asked, show a dialog
+                if (!preferences.getBoolean(KEY_REFERRAL_ASKED, false)) {
+                    // set asked as true
+                    preferences.edit { putBoolean(KEY_REFERRAL_ASKED, true) }
 
-        activityViewModel.userLiveData.observe(viewLifecycleOwner) {
-            if (_binding == null) return@observe
-            populateUserView(it.peekContent())
-            lifecycleScope.launch {
-                if (activityViewModel.isTokenPrivate()) {
-                    binding.tvLoginDescription.text = getString(R.string.login_type_private)
+                    MaterialAlertDialogBuilder(requireContext())
+                        .setTitle(getString(R.string.referral))
+                        .setMessage(getString(R.string.referral_proposal))
+                        .setNegativeButton(getString(R.string.decline)) { _, _ ->
+                            preferences.edit { putBoolean(KEY_REFERRAL_USE, false) }
+                            context?.openExternalWebPage(ACCOUNT_LINK)
+                        }
+                        .setPositiveButton(getString(R.string.accept)) { _, _ ->
+                            preferences.edit { putBoolean(KEY_REFERRAL_USE, true) }
+                            context?.openExternalWebPage(REFERRAL_LINK)
+                        }
+                        .show()
                 } else {
-                    binding.tvLoginDescription.text = getString(R.string.login_type_open)
+                    if (preferences.getBoolean(KEY_REFERRAL_USE, false))
+                        context?.openExternalWebPage(REFERRAL_LINK)
+                    else context?.openExternalWebPage(ACCOUNT_LINK)
                 }
             }
         }
 
-        binding.bAccount.setOnClickListener {
-            if (_binding == null) return@setOnClickListener
-            // if we never asked, show a dialog
-            if (!preferences.getBoolean(KEY_REFERRAL_ASKED, false)) {
-                // set asked as true
-                preferences.edit { putBoolean(KEY_REFERRAL_ASKED, true) }
-
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle(getString(R.string.referral))
-                    .setMessage(getString(R.string.referral_proposal))
-                    .setNegativeButton(getString(R.string.decline)) { _, _ ->
-                        preferences.edit { putBoolean(KEY_REFERRAL_USE, false) }
-                        context?.openExternalWebPage(ACCOUNT_LINK)
+        activityViewModel.userLiveData.observe(viewLifecycleOwner) {
+            if (_binding == null) return@observe
+            if (!isDebridLink) {
+                populateUserView(it.peekContent())
+                lifecycleScope.launch {
+                    if (activityViewModel.isTokenPrivate()) {
+                        binding.tvLoginDescription.text = getString(R.string.login_type_private)
+                    } else {
+                        binding.tvLoginDescription.text = getString(R.string.login_type_open)
                     }
-                    .setPositiveButton(getString(R.string.accept)) { _, _ ->
-                        preferences.edit { putBoolean(KEY_REFERRAL_USE, true) }
-                        context?.openExternalWebPage(REFERRAL_LINK)
-                    }
-                    .show()
-            } else {
-                if (preferences.getBoolean(KEY_REFERRAL_USE, false))
-                    context?.openExternalWebPage(REFERRAL_LINK)
-                else context?.openExternalWebPage(ACCOUNT_LINK)
+                }
             }
         }
 
