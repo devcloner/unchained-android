@@ -1,14 +1,14 @@
 <resources>
     <string name="app_name" translatable="false">Unchained</string>
-    <string name="debrid_link_api_key_title">Debrid-Link API key</string>
-    <string name="debrid_link_key_summary">Get a personal key at debrid-link.com/webapp/apikey. Never share it.</string>
-    <string name="debrid_link_remove_key">Remove Debrid-Link key</string>
-    <string name="debrid_link_key_removed">Debrid-Link key removed</string>
-    <string name="debrid_link_no_key">Add your Debrid-Link API key in Settings first</string>
-    <string name="debrid_link_add_success">Magnet added to Debrid-Link seedbox</string>
-    <string name="debrid_link_add_error">Debrid-Link could not add this magnet</string>
-    <string name="debrid_link_add_action">Send magnet to Debrid-Link</string>
-    <string name="debrid_link_invalid_magnet">Enter a valid magnet link</string>
+    <string name="debrid_link_api_key_title" translatable="false">Debrid-Link API key</string>
+    <string name="debrid_link_key_summary" translatable="false">Get a personal key at debrid-link.com/webapp/apikey. Never share it.</string>
+    <string name="debrid_link_remove_key" translatable="false">Remove Debrid-Link key</string>
+    <string name="debrid_link_key_removed" translatable="false">Debrid-Link key removed</string>
+    <string name="debrid_link_no_key" translatable="false">Add your Debrid-Link API key in Settings first</string>
+    <string name="debrid_link_add_success" translatable="false">Magnet added to Debrid-Link seedbox</string>
+    <string name="debrid_link_add_error" translatable="false">Debrid-Link could not add this magnet</string>
+    <string name="debrid_link_add_action" translatable="false">Send magnet to Debrid-Link</string>
+    <string name="debrid_link_invalid_magnet" translatable="false">Enter a valid magnet link</string>
     <string name="google" translatable="false">Google</string>
     <string name="cloudflare" translatable="false">Cloudflare</string>
     <string name="quad9" translatable="false">Quad9</string>

@@ -40,7 +40,7 @@ class DebridLinkTest {
             """
                 .trimIndent()
 
-        val parsed: DebridLinkResponse<List<DebridLinkTorrent>>? = adapter(torrentListType).fromJson(json)
+        val parsed: DebridLinkResponse<List<DebridLinkTorrent>>? = adapter<DebridLinkResponse<List<DebridLinkTorrent>>>(torrentListType).fromJson(json)
 
         val result = unwrap(parsed)
         assertTrue(result is EitherResult.Success)
@@ -54,7 +54,7 @@ class DebridLinkTest {
 
     @Test
     fun `add magnet response parses the torrent id`() {
-        val parsed: DebridLinkResponse<String>? = adapter(Types.newParameterizedType(DebridLinkResponse::class.java, String::class.java))
+        val parsed: DebridLinkResponse<String>? = adapter<DebridLinkResponse<String>>(Types.newParameterizedType(DebridLinkResponse::class.java, String::class.java))
             .fromJson("""{"success":true,"value":"abcd"}""")
 
         val result = unwrap(parsed)
@@ -66,7 +66,7 @@ class DebridLinkTest {
     fun `failure envelope on a 200 becomes a failure with the api message`() {
         val json = """{"success":false,"error":"badToken","error_id":3}"""
 
-        val parsed: DebridLinkResponse<DebridLinkTorrent>? = adapter(torrentType).fromJson(json)
+        val parsed: DebridLinkResponse<DebridLinkTorrent>? = adapter<DebridLinkResponse<DebridLinkTorrent>>(torrentType).fromJson(json)
 
         val result = unwrap(parsed)
         assertTrue(result is EitherResult.Failure)
@@ -86,7 +86,7 @@ class DebridLinkTest {
     fun `unknown json fields are ignored`() {
         val json = """{"success":true,"value":{"id":"x","unknownField":42},"extra":true}"""
 
-        val parsed: DebridLinkResponse<DebridLinkTorrent>? = adapter(torrentType).fromJson(json)
+        val parsed: DebridLinkResponse<DebridLinkTorrent>? = adapter<DebridLinkResponse<DebridLinkTorrent>>(torrentType).fromJson(json)
 
         val result = unwrap(parsed)
         assertTrue(result is EitherResult.Success)
