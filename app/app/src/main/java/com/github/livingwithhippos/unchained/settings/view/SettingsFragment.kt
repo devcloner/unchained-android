@@ -15,10 +15,16 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
+import androidx.preference.SwitchPreferenceCompat
+import androidx.appcompat.app.AlertDialog
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.github.livingwithhippos.unchained.R
 import com.github.livingwithhippos.unchained.data.repository.DebridLinkRepository
+import com.github.livingwithhippos.unchained.utilities.DebridDiagnostics
 import com.github.livingwithhippos.unchained.settings.viewmodel.SettingEvent
 import com.github.livingwithhippos.unchained.settings.viewmodel.SettingsViewModel
 import com.github.livingwithhippos.unchained.utilities.FEEDBACK_URL
@@ -82,6 +88,30 @@ class SettingsFragment : PreferenceFragmentCompat() {
                         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
                 }
             }
+            true
+        }
+
+        DebridDiagnostics.setEnabled(preferences.getBoolean("diagnostics_enabled", false))
+        findPreference<SwitchPreferenceCompat>("diagnostics_enabled")?.setOnPreferenceChangeListener { _, value ->
+            DebridDiagnostics.setEnabled(value == true)
+            true
+        }
+        findPreference<Preference>("diagnostics_view")?.setOnPreferenceClickListener {
+            val filter = preferences.getString("diagnostics_level", "ALL") ?: "ALL"
+            val text = DebridDiagnostics.snapshot(filter)
+            AlertDialog.Builder(requireContext())
+                .setTitle(getString(R.string.diagnostics_view))
+                .setMessage(text)
+                .setPositiveButton(getString(R.string.diagnostics_copy)) { _, _ ->
+                    val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    clipboard.setPrimaryClip(ClipData.newPlainText("Debrid-Link diagnostics", text))
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+            true
+        }
+        findPreference<Preference>("diagnostics_clear")?.setOnPreferenceClickListener {
+            DebridDiagnostics.clear()
             true
         }
 

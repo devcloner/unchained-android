@@ -21,7 +21,7 @@ class DebridLinkApiHelperImpl @Inject constructor(private val debridLinkApi: Deb
         url: String,
         wait: Boolean?,
         structureType: String?,
-    ): Response<DebridLinkResponse<String>> =
+    ): Response<DebridLinkResponse<DebridLinkTorrent>> =
         debridLinkApi.addMagnet(token, url, wait, structureType)
 
     override suspend fun addTorrentFile(
@@ -29,7 +29,7 @@ class DebridLinkApiHelperImpl @Inject constructor(private val debridLinkApi: Deb
         file: MultipartBody.Part,
         wait: Boolean?,
         structureType: String?,
-    ): Response<DebridLinkResponse<String>> =
+    ): Response<DebridLinkResponse<DebridLinkTorrent>> =
         debridLinkApi.addTorrentFile(token, file, wait, structureType)
 
     override suspend fun getSeedboxList(

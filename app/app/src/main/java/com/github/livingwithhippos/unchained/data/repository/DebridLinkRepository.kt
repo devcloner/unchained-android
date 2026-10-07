@@ -11,6 +11,7 @@ import com.github.livingwithhippos.unchained.data.model.EmptyBodyError
 import com.github.livingwithhippos.unchained.data.model.NetworkError
 import com.github.livingwithhippos.unchained.data.model.UnchainedNetworkException
 import com.github.livingwithhippos.unchained.data.remote.debridlink.DebridLinkApiHelper
+import com.github.livingwithhippos.unchained.utilities.DebridDiagnostics
 import com.github.livingwithhippos.unchained.utilities.EitherResult
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -49,10 +50,21 @@ constructor(
     suspend fun addMagnet(
         url: String,
         wait: Boolean = false,
-    ): EitherResult<UnchainedNetworkException, String> =
-        apiCall(errorMessage = "Error adding magnet to Debrid-Link") {
+    ): EitherResult<UnchainedNetworkException, String> {
+        DebridDiagnostics.record("INFO", "Seedbox add started")
+        return when (val result = apiCall(errorMessage = "Error adding magnet to Debrid-Link") {
             debridLinkApiHelper.addMagnet(token = bearer(), url = url, wait = wait)
+        }) {
+            is EitherResult.Success -> {
+                DebridDiagnostics.record("INFO", "Seedbox add succeeded")
+                EitherResult.Success(result.success.id)
+            }
+            is EitherResult.Failure -> {
+                DebridDiagnostics.record("ERROR", "Seedbox add failed: ${DebridDiagnostics.errorLabel(result.failure)}")
+                result
+            }
         }
+    }
 
     /** Upload a local `.torrent` file to the seedbox. */
     suspend fun addTorrent(
@@ -62,8 +74,11 @@ constructor(
         val body = binaryTorrent.toRequestBody("application/x-bittorrent".toMediaTypeOrNull(), 0, binaryTorrent.size)
         val part = MultipartBody.Part.createFormData("file", fileName, body)
 
-        return apiCall(errorMessage = "Error uploading torrent to Debrid-Link") {
+        return when (val result = apiCall(errorMessage = "Error uploading torrent to Debrid-Link") {
             debridLinkApiHelper.addTorrentFile(token = bearer(), file = part)
+        }) {
+            is EitherResult.Success -> EitherResult.Success(result.success.id)
+            is EitherResult.Failure -> result
         }
     }
 
@@ -114,16 +129,27 @@ constructor(
                 try {
                     block()
                 } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) throw e
                     Timber.e(e, errorMessage)
                     return@withContext EitherResult.Failure(NetworkError(-1, errorMessage))
                 }
 
             if (!response.isSuccessful) {
-                return@withContext EitherResult.Failure(NetworkError(response.code(), errorMessage))
+                return@withContext EitherResult.Failure(apiFailure(response))
             }
 
             unwrap(response.body())
         }
+
+    private fun apiFailure(response: Response<*>): UnchainedNetworkException {
+        val body = try { response.errorBody()?.string()?.take(4096) } catch (_: Exception) { null }
+        val error = try {
+            com.squareup.moshi.Moshi.Builder().build().adapter(DebridLinkResponse::class.java).fromJson(body.orEmpty())
+        } catch (_: Exception) { null }
+        return if (error?.error != null) {
+            DebridLinkError(error.error, error.errorId, error.errorDescription)
+        } else NetworkError(response.code(), "Debrid-Link HTTP ${response.code()}")
+    }
 
     private companion object {
         /** Debrid-Link caps `perPage` between 20 and 100. */
@@ -147,6 +173,7 @@ internal fun <T : Any> unwrap(
                 DebridLinkError(
                     error = response.error ?: "Unknown Debrid-Link error",
                     errorId = response.errorId,
+                    description = response.errorDescription,
                 )
             )
     }

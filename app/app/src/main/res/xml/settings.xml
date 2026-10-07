@@ -306,4 +306,20 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/diagnostics_title">
+        <SwitchPreferenceCompat
+            android:key="diagnostics_enabled"
+            android:defaultValue="false"
+            android:title="@string/diagnostics_enabled" />
+        <ListPreference
+            android:key="diagnostics_level"
+            android:defaultValue="ALL"
+            android:title="@string/diagnostics_level"
+            android:entries="@array/diagnostics_level_labels"
+            android:entryValues="@array/diagnostics_level_values"
+            app:useSimpleSummaryProvider="true" />
+        <Preference android:key="diagnostics_view" android:title="@string/diagnostics_view" />
+        <Preference android:key="diagnostics_clear" android:title="@string/diagnostics_clear" />
+    </PreferenceCategory>
+
 </PreferenceScreen>

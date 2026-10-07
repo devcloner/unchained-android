@@ -13,6 +13,7 @@ import com.github.livingwithhippos.unchained.plugins.model.ScrapedItem
 import com.github.livingwithhippos.unchained.search.model.LinkItem
 import com.github.livingwithhippos.unchained.search.model.LinkItemAdapter
 import com.github.livingwithhippos.unchained.search.model.LinkItemListener
+import com.github.livingwithhippos.unchained.utilities.DebridDiagnostics
 import com.github.livingwithhippos.unchained.utilities.EitherResult
 import com.github.livingwithhippos.unchained.utilities.extension.copyToClipboard
 import com.github.livingwithhippos.unchained.utilities.extension.openExternalWebPage
@@ -84,6 +85,17 @@ class SearchItemFragment : UnchainedFragment(), LinkItemListener {
             return
         }
         val url = rawUrl.trim()
+        if (url.isBlank()) {
+            DebridDiagnostics.record("ISSUE", "Search result has no usable link")
+            context?.showToast(R.string.debrid_link_invalid_magnet)
+            return
+        }
+        DebridDiagnostics.record("INFO", "Search result selected: ${when {
+            url.startsWith("magnet:?") -> "magnet"
+            url.matches(Regex("[a-fA-F0-9]{40}|[a-zA-Z2-7]{32}")) -> "hash"
+            url.startsWith("http://") || url.startsWith("https://") -> "web link"
+            else -> "unsupported link"
+        }}")
         context?.showToast(R.string.loading_torrent_file)
         lifecycleScope.launch {
             val result = when {
@@ -107,7 +119,9 @@ class SearchItemFragment : UnchainedFragment(), LinkItemListener {
                     }
                 }
                 else -> {
-                    debridLinkRepository.addMagnet(url)
+                    DebridDiagnostics.record("ISSUE", "Search provider returned an unsupported link format")
+                    context?.showToast(R.string.debrid_link_invalid_magnet)
+                    return@launch
                 }
             }
 
@@ -116,12 +130,7 @@ class SearchItemFragment : UnchainedFragment(), LinkItemListener {
                     context?.showToast(R.string.debrid_link_add_success)
                 }
                 is EitherResult.Failure -> {
-                    val err = (result.failure as? com.github.livingwithhippos.unchained.data.model.DebridLinkError)?.error
-                    if (!err.isNullOrBlank()) {
-                        context?.showToast("Debrid-Link: $err")
-                    } else {
-                        context?.showToast(R.string.debrid_link_add_error)
-                    }
+                    context?.showToast("Debrid-Link: ${DebridDiagnostics.errorLabel(result.failure)}")
                 }
             }
         }

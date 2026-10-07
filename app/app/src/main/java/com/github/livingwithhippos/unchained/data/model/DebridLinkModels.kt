@@ -13,11 +13,12 @@ data class DebridLinkResponse<T : Any>(
     @param:Json(name = "success") val success: Boolean = false,
     @param:Json(name = "value") val value: T? = null,
     @param:Json(name = "error") val error: String? = null,
+    @param:Json(name = "error_description") val errorDescription: String? = null,
     @param:Json(name = "error_id") val errorId: Int? = null,
 )
 
 /** A Debrid-Link failure, mirroring [APIError] for Real-Debrid. */
-data class DebridLinkError(val error: String, val errorId: Int?) : UnchainedNetworkException
+data class DebridLinkError(val error: String, val errorId: Int?, val description: String? = null) : UnchainedNetworkException
 
 @JsonClass(generateAdapter = true)
 data class DebridLinkAccount(

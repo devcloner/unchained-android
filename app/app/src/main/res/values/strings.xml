@@ -6,7 +6,7 @@
     <string name="debrid_link_key_removed" translatable="false">Debrid-Link key removed</string>
     <string name="debrid_link_no_key" translatable="false">Add your Debrid-Link API key in Settings first</string>
     <string name="debrid_link_add_success" translatable="false">Magnet added to Debrid-Link seedbox</string>
-    <string name="debrid_link_add_error" translatable="false">Debrid-Link could not add this magnet</string>
+    <string name="debrid_link_add_error" translatable="false">Debrid-Link request failed; enable diagnostics in Settings</string>
     <string name="debrid_link_add_action" translatable="false">Send magnet to Debrid-Link</string>
     <string name="debrid_link_invalid_magnet" translatable="false">Enter a valid magnet link</string>
     <string name="debrid_provider_title" translatable="false">Active debrid provider</string>
@@ -20,6 +20,12 @@
     <string name="auth_with_debrid_link" translatable="false">Authenticated with Debrid-Link</string>
     <string name="get_api_here" translatable="false">Get API Key Here</string>
     <string name="debrid_link_api_key_page_hint" translatable="false">Debrid-Link active. Tap here or the button below to get your API key from debrid-link.com/webapp/apikey.</string>
+    <string name="diagnostics_title" translatable="false">Debrid-Link diagnostics</string>
+    <string name="diagnostics_enabled" translatable="false">Enable verbose diagnostics</string>
+    <string name="diagnostics_level" translatable="false">Only show</string>
+    <string name="diagnostics_view" translatable="false">View and copy diagnostics</string>
+    <string name="diagnostics_copy" translatable="false">Copy</string>
+    <string name="diagnostics_clear" translatable="false">Clear diagnostics</string>
     <string name="google" translatable="false">Google</string>
     <string name="cloudflare" translatable="false">Cloudflare</string>
     <string name="quad9" translatable="false">Quad9</string>

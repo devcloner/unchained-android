@@ -48,7 +48,7 @@ interface DebridLinkApi {
         @Field("url") url: String,
         @Field("wait") wait: Boolean? = null,
         @Field("structureType") structureType: String? = null,
-    ): Response<DebridLinkResponse<String>>
+    ): Response<DebridLinkResponse<DebridLinkTorrent>>
 
     @Multipart
     @POST("seedbox/add")
@@ -57,7 +57,7 @@ interface DebridLinkApi {
         @Part file: MultipartBody.Part,
         @Query("wait") wait: Boolean? = null,
         @Query("structureType") structureType: String? = null,
-    ): Response<DebridLinkResponse<String>>
+    ): Response<DebridLinkResponse<DebridLinkTorrent>>
 
     /**
      * @param ids comma separated torrent ids (max 100) - full list when null

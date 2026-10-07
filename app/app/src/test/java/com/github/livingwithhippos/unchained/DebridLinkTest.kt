@@ -6,12 +6,19 @@ import com.github.livingwithhippos.unchained.data.model.DebridLinkResponse
 import com.github.livingwithhippos.unchained.data.model.DebridLinkTorrent
 import com.github.livingwithhippos.unchained.data.model.toDirectDownloadItems
 import com.github.livingwithhippos.unchained.data.model.toTorrentItem
+import com.github.livingwithhippos.unchained.data.remote.debridlink.DebridLinkApi
 import com.github.livingwithhippos.unchained.data.repository.unwrap
 import com.github.livingwithhippos.unchained.utilities.DebridProvider
 import com.github.livingwithhippos.unchained.utilities.EitherResult
 import com.github.livingwithhippos.unchained.utilities.extension.isMagnet
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
+import kotlinx.coroutines.runBlocking
+import okhttp3.OkHttpClient
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.ResponseBody.Companion.toResponseBody
+import retrofit2.Retrofit
+import retrofit2.converter.moshi.MoshiConverterFactory
 import java.lang.reflect.Type
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -32,6 +39,20 @@ class DebridLinkTest {
 
     private val torrentType: Type =
         Types.newParameterizedType(DebridLinkResponse::class.java, DebridLinkTorrent::class.java)
+
+    @Test
+    fun `diagnostics filter excludes other levels`() {
+        com.github.livingwithhippos.unchained.utilities.DebridDiagnostics.setEnabled(true)
+        try {
+            com.github.livingwithhippos.unchained.utilities.DebridDiagnostics.record("INFO", "Seedbox started")
+            com.github.livingwithhippos.unchained.utilities.DebridDiagnostics.record("ERROR", "Server failed")
+            val errors = com.github.livingwithhippos.unchained.utilities.DebridDiagnostics.snapshot("ERROR")
+            assertTrue(errors.contains("Server failed"))
+            assertTrue(!errors.contains("Seedbox started"))
+        } finally {
+            com.github.livingwithhippos.unchained.utilities.DebridDiagnostics.setEnabled(false)
+        }
+    }
 
     @Test
     fun `seedbox list response parses files`() {
@@ -57,13 +78,46 @@ class DebridLinkTest {
     }
 
     @Test
+    fun `seedbox add parses object and sends encoded magnet`() = runBlocking {
+        var recordedPath = ""
+        var recordedBody = ""
+        var recordedAuth = ""
+        val client = OkHttpClient.Builder().addInterceptor { chain ->
+            val request = chain.request()
+            recordedPath = request.url.encodedPath
+            recordedAuth = request.header("Authorization").orEmpty()
+            val buffer = okio.Buffer()
+            request.body?.writeTo(buffer)
+            recordedBody = buffer.readUtf8()
+            okhttp3.Response.Builder()
+                .request(request)
+                .protocol(okhttp3.Protocol.HTTP_1_1)
+                .code(200)
+                .message("OK")
+                .body("""{"success":true,"value":{"id":"seedbox-123","name":"Example"}}"""
+                    .toByteArray().toResponseBody("application/json".toMediaType()))
+                .build()
+        }.build()
+        val api = Retrofit.Builder().baseUrl("https://debrid-link.com/api/v2/")
+            .client(client).addConverterFactory(MoshiConverterFactory.create())
+            .build().create(DebridLinkApi::class.java)
+        val magnet = "magnet:?xt=urn:btih:0123456789012345678901234567890123456789&dn=Example"
+        val response = api.addMagnet("Bearer sample", magnet)
+        assertEquals("/api/v2/seedbox/add", recordedPath)
+        assertEquals("Bearer sample", recordedAuth)
+        assertTrue(recordedBody.contains("url=magnet%3A%3Fxt%3Durn%3Abtih%3A"))
+        assertTrue(recordedBody.contains("%26dn%3DExample"))
+        assertEquals("seedbox-123", response.body()?.value?.id)
+    }
+
+    @Test
     fun `add magnet response parses the torrent id`() {
-        val parsed: DebridLinkResponse<String>? = adapter<DebridLinkResponse<String>>(Types.newParameterizedType(DebridLinkResponse::class.java, String::class.java))
-            .fromJson("""{"success":true,"value":"abcd"}""")
+        val parsed: DebridLinkResponse<DebridLinkTorrent>? = adapter<DebridLinkResponse<DebridLinkTorrent>>(torrentType)
+            .fromJson("""{"success":true,"value":{"id":"abcd","name":"Example"}}""")
 
         val result = unwrap(parsed)
         assertTrue(result is EitherResult.Success)
-        assertEquals("abcd", (result as EitherResult.Success).success)
+        assertEquals("abcd", (result as EitherResult.Success).success.id)
     }
 
     @Test

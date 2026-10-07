@@ -13,6 +13,7 @@ import com.github.livingwithhippos.unchained.data.local.RepositoryDataDao
 import com.github.livingwithhippos.unchained.data.model.Repository
 import com.github.livingwithhippos.unchained.data.repository.ServiceRepository
 import com.github.livingwithhippos.unchained.utilities.DEFAULT_PLUGINS_REPOSITORY_LINK
+import com.github.livingwithhippos.unchained.utilities.DebridDiagnostics
 import com.github.livingwithhippos.unchained.utilities.TelemetryManager
 import com.github.livingwithhippos.unchained.utilities.download.NetworkChangeDownloadCanceller
 import dagger.hilt.android.HiltAndroidApp
@@ -45,6 +46,7 @@ class UnchainedApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        DebridDiagnostics.setEnabled(preferences.getBoolean("diagnostics_enabled", false))
 
         registerActivityLifecycleCallbacks(activityCallback)
 

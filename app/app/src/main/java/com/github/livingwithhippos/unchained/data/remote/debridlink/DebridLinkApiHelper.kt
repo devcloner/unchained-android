@@ -17,14 +17,14 @@ interface DebridLinkApiHelper {
         url: String,
         wait: Boolean? = null,
         structureType: String? = null,
-    ): Response<DebridLinkResponse<String>>
+    ): Response<DebridLinkResponse<DebridLinkTorrent>>
 
     suspend fun addTorrentFile(
         token: String,
         file: MultipartBody.Part,
         wait: Boolean? = null,
         structureType: String? = null,
-    ): Response<DebridLinkResponse<String>>
+    ): Response<DebridLinkResponse<DebridLinkTorrent>>
 
     suspend fun getSeedboxList(
         token: String,
