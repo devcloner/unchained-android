@@ -82,7 +82,7 @@ interface DebridLinkApi {
     ): Response<DebridLinkResponse<Map<String, DebridLinkActivity>>>
 
     /** Returns the ids that were removed. */
-    @DELETE("seedbox/{id}")
+    @DELETE("seedbox/{id}/remove")
     suspend fun deleteTorrent(
         @Header("Authorization") token: String,
         @Path("id") id: String,

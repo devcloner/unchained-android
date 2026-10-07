@@ -88,13 +88,7 @@ data class DebridLinkActivity(
     @param:Json(name = "uploadRatio") val uploadRatio: Double? = null,
     @param:Json(name = "totalSize") val totalSize: Long? = null,
     @param:Json(name = "expired") val expired: Boolean? = null,
-    @param:Json(name = "files") val files: Map<String, DebridLinkActivityFile> = emptyMap(),
-)
-
-@JsonClass(generateAdapter = true)
-data class DebridLinkActivityFile(
-    @param:Json(name = "downloadPercent") val downloadPercent: Int? = null,
-    @param:Json(name = "downloadUrl") val downloadUrl: String? = null,
+    @param:Json(name = "files") val files: List<Int> = emptyList(),
 )
 
 /** An entry of the hoster-link downloader (`GET /downloader/list`). */

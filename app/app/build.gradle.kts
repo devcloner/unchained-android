@@ -54,8 +54,8 @@ android {
         applicationId = "com.github.livingwithhippos.unchained"
         minSdk = 27
         targetSdk = 37
-        versionCode = 64
-        versionName = "1.8.3"
+        versionCode = 65
+        versionName = "1.8.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

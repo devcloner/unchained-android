@@ -111,6 +111,43 @@ class DebridLinkTest {
     }
 
     @Test
+    fun `seedbox activity parses per-file percentages`() {
+        val type = Types.newParameterizedType(
+            DebridLinkResponse::class.java,
+            Types.newParameterizedType(Map::class.java, String::class.java,
+                com.github.livingwithhippos.unchained.data.model.DebridLinkActivity::class.java),
+        )
+        val parsed = adapter<DebridLinkResponse<Map<String, com.github.livingwithhippos.unchained.data.model.DebridLinkActivity>>>(type)
+            .fromJson("""{"success":true,"value":{"torrent1":{"status":6,"downloadPercent":50,"files":[50,100]}}}""")
+        assertEquals(listOf(50, 100), parsed?.value?.get("torrent1")?.files)
+    }
+
+    @Test
+    fun `delete uses documented remove route`() = runBlocking {
+        var method = ""
+        var path = ""
+        val client = OkHttpClient.Builder().addInterceptor { chain ->
+            method = chain.request().method
+            path = chain.request().url.encodedPath
+            okhttp3.Response.Builder()
+                .request(chain.request())
+                .protocol(okhttp3.Protocol.HTTP_1_1)
+                .code(200)
+                .message("OK")
+                .body("""{"success":true,"value":["torrent1"]}"""
+                    .toByteArray().toResponseBody("application/json".toMediaType()))
+                .build()
+        }.build()
+        val api = Retrofit.Builder().baseUrl("https://debrid-link.com/api/v2/")
+            .client(client).addConverterFactory(MoshiConverterFactory.create())
+            .build().create(DebridLinkApi::class.java)
+        val response = api.deleteTorrent("Bearer sample", "torrent1")
+        assertEquals("DELETE", method)
+        assertEquals("/api/v2/seedbox/torrent1/remove", path)
+        assertEquals(listOf("torrent1"), response.body()?.value)
+    }
+
+    @Test
     fun `add magnet response parses the torrent id`() {
         val parsed: DebridLinkResponse<DebridLinkTorrent>? = adapter<DebridLinkResponse<DebridLinkTorrent>>(torrentType)
             .fromJson("""{"success":true,"value":{"id":"abcd","name":"Example"}}""")
