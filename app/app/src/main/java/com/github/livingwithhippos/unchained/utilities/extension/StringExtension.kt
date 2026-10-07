@@ -63,11 +63,18 @@ fun formatStringForSearch(query: String): String {
         .replace("&", "%26")
 }
 
-/** check if a String is a magnet link */
+/** check if a String is a magnet link or torrent hash */
 fun String?.isMagnet(): Boolean {
     if (this == null) return false
-    val m: Matcher = Pattern.compile(MAGNET_PATTERN).matcher(this)
-    return m.lookingAt()
+    val trimmed = this.trim()
+    if (trimmed.startsWith("magnet:?", ignoreCase = true)) {
+        val lower = trimmed.lowercase()
+        return lower.contains("xt=urn:btih:") || lower.contains("xt=urn:btmh:") || lower.length > 8
+    }
+    val m: Matcher = Pattern.compile(MAGNET_PATTERN, Pattern.CASE_INSENSITIVE).matcher(trimmed)
+    if (m.lookingAt()) return true
+    return trimmed.matches("^[a-fA-F0-9]{40}$".toRegex()) ||
+        trimmed.matches("^[a-zA-Z2-7]{32}$".toRegex())
 }
 
 /** check if a String is a torrent link */

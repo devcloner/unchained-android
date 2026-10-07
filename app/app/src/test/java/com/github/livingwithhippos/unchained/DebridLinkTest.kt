@@ -4,10 +4,12 @@ import com.github.livingwithhippos.unchained.data.model.DebridLinkError
 import com.github.livingwithhippos.unchained.data.model.DebridLinkFile
 import com.github.livingwithhippos.unchained.data.model.DebridLinkResponse
 import com.github.livingwithhippos.unchained.data.model.DebridLinkTorrent
+import com.github.livingwithhippos.unchained.data.model.toDirectDownloadItems
 import com.github.livingwithhippos.unchained.data.model.toTorrentItem
 import com.github.livingwithhippos.unchained.data.repository.unwrap
 import com.github.livingwithhippos.unchained.utilities.DebridProvider
 import com.github.livingwithhippos.unchained.utilities.EitherResult
+import com.github.livingwithhippos.unchained.utilities.extension.isMagnet
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import java.lang.reflect.Type

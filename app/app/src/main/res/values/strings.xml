@@ -14,6 +14,8 @@
     <string name="debrid_link_host_success" translatable="false">Link added to Debrid-Link downloader</string>
     <string name="debrid_link_torrent_success" translatable="false">Torrent uploaded to Debrid-Link seedbox</string>
     <string name="debrid_link_clipboard_detected" translatable="false">Magnet detected from clipboard</string>
+    <string name="send_to_debrid_link" translatable="false">Download with Debrid-Link</string>
+    <string name="send_to_real_debrid" translatable="false">Download with Real-Debrid</string>
     <string name="google" translatable="false">Google</string>
     <string name="cloudflare" translatable="false">Cloudflare</string>
     <string name="quad9" translatable="false">Quad9</string>

@@ -134,3 +134,46 @@ fun DebridLinkTorrent.toTorrentItem(): TorrentItem =
         speed = downloadSpeed?.toInt(),
         seeders = peersConnected,
     )
+
+/** Convert a TorrentItem with direct links into DownloadItems for immediate playback/download. */
+fun TorrentItem.toDirectDownloadItems(): List<DownloadItem> {
+    if (files.isNullOrEmpty()) {
+        return links.mapIndexed { idx, dlUrl ->
+            DownloadItem(
+                id = "${id}_$idx",
+                filename = filename,
+                mimeType = null,
+                fileSize = bytes,
+                link = dlUrl,
+                host = host,
+                hostIcon = null,
+                chunks = 1,
+                crc = null,
+                download = dlUrl,
+                streamable = 1,
+                generated = added,
+                type = null,
+                alternative = null,
+            )
+        }
+    }
+    return files.mapIndexed { idx, file ->
+        val dlUrl = links.getOrNull(idx) ?: links.firstOrNull() ?: ""
+        DownloadItem(
+            id = "${id}_$idx",
+            filename = file.path,
+            mimeType = null,
+            fileSize = file.bytes,
+            link = dlUrl,
+            host = host,
+            hostIcon = null,
+            chunks = 1,
+            crc = null,
+            download = dlUrl,
+            streamable = 1,
+            generated = added,
+            type = null,
+            alternative = null,
+        )
+    }
+}

@@ -21,6 +21,7 @@ import com.github.livingwithhippos.unchained.plugins.Parser
 import com.github.livingwithhippos.unchained.plugins.ParserResult
 import com.github.livingwithhippos.unchained.plugins.model.Plugin
 import com.github.livingwithhippos.unchained.plugins.model.ScrapedItem
+import com.github.livingwithhippos.unchained.search.builtin.BuiltinSearchEngine
 import com.github.livingwithhippos.unchained.settings.view.SettingsFragment.Companion.KEY_USE_DOH
 import com.github.livingwithhippos.unchained.utilities.Event
 import com.github.livingwithhippos.unchained.utilities.extension.cancelIfActive
@@ -49,6 +50,7 @@ constructor(
     private val jackettRepository: JackettRepository,
     private val prowlarrRepository: ProwlarrRepository,
     private val parser: Parser,
+    private val builtinSearchEngine: BuiltinSearchEngine,
 ) : ViewModel() {
 
     // used to simulate a debounce effect while typing on the search bar
@@ -260,7 +262,16 @@ constructor(
                 )
 
             if (enabledPlugins.isEmpty() && enabledServices.isEmpty()) {
-                parsingLiveData.value = ParserResult.NoEnabledPlugins
+                parsingLiveData.value = ParserResult.SearchStarted(-1)
+                val builtinResults = builtinSearchEngine.search(query)
+                if (builtinResults.isEmpty()) {
+                    parsingLiveData.value = ParserResult.Results(emptyList())
+                    setSearchResults(emptyList())
+                } else {
+                    parsingLiveData.value = ParserResult.Results(builtinResults)
+                    setSearchResults(builtinResults)
+                }
+                parsingLiveData.value = ParserResult.SearchFinished
                 return@launch
             }
 
@@ -271,6 +282,15 @@ constructor(
                 // accumulate results from all plugin/service searches so they survive fragment
                 // recreation (saved to SavedStateHandle via setSearchResults)
                 val results = mutableListOf<ScrapedItem>()
+
+                val builtinSearch = launch {
+                    val builtinResults = builtinSearchEngine.search(query)
+                    if (builtinResults.isNotEmpty()) {
+                        results.addAll(builtinResults)
+                        parsingLiveData.value = ParserResult.Results(results)
+                        setSearchResults(results)
+                    }
+                }
 
                 val pluginSearches = enabledPlugins.map { plugin ->
                     launch {
@@ -356,6 +376,7 @@ constructor(
 
                 pluginSearches.joinAll()
                 servicesSearches.joinAll()
+                builtinSearch.join()
             }
 
             parsingLiveData.value = ParserResult.SearchFinished

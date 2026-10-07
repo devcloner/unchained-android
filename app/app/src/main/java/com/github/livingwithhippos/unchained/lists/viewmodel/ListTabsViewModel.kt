@@ -15,6 +15,7 @@ import androidx.paging.liveData
 import com.github.livingwithhippos.unchained.data.model.DownloadItem
 import com.github.livingwithhippos.unchained.data.model.TorrentItem
 import com.github.livingwithhippos.unchained.data.model.UnchainedNetworkException
+import com.github.livingwithhippos.unchained.data.model.toDirectDownloadItems
 import com.github.livingwithhippos.unchained.data.repository.DebridLinkRepository
 import com.github.livingwithhippos.unchained.data.repository.DownloadRepository
 import com.github.livingwithhippos.unchained.data.repository.TorrentsRepository
@@ -102,6 +103,15 @@ constructor(
      */
     fun unrestrictTorrent(torrent: TorrentItem) {
         viewModelScope.launch {
+            val provider =
+                DebridProvider.fromId(
+                    preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.REAL_DEBRID.id)
+                )
+            if (provider == DebridProvider.DEBRID_LINK) {
+                val directDownloads = torrent.toDirectDownloadItems()
+                downloadItemLiveData.postEvent(directDownloads)
+                return@launch
+            }
             val items = unrestrictRepository.getUnrestrictedLinkList(torrent.links)
             val values =
                 items.filterIsInstance<EitherResult.Success<DownloadItem>>().map { it.success }
