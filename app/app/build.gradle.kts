@@ -1,4 +1,6 @@
 import java.util.Properties
+import org.gradle.api.tasks.testing.Test
+import org.gradle.jvm.toolchain.JavaLanguageVersion
 
 plugins {
     id("com.android.application")
@@ -36,6 +38,11 @@ ktfmt {
 }
 
 kotlin { jvmToolchain(11) }
+
+// ponytail: only Robolectric tests need a newer VM; app bytecode stays Java 11.
+tasks.withType<Test>().configureEach {
+    javaLauncher = javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(21)) }
+}
 
 room { schemaDirectory("$projectDir/schemas") }
 
