@@ -1,4 +1,6 @@
 import java.util.Properties
+import org.gradle.api.tasks.testing.Test
+import org.gradle.jvm.toolchain.JavaLanguageVersion
 
 plugins {
     id("com.android.application")
@@ -37,6 +39,11 @@ ktfmt {
 
 kotlin { jvmToolchain(11) }
 
+// ponytail: only Robolectric tests need a newer VM; app bytecode stays Java 11.
+tasks.withType<Test>().configureEach {
+    javaLauncher = javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(21)) }
+}
+
 room { schemaDirectory("$projectDir/schemas") }
 
 android {
@@ -47,8 +54,8 @@ android {
         applicationId = "com.github.livingwithhippos.unchained"
         minSdk = 27
         targetSdk = 37
-        versionCode = 62
-        versionName = "1.8.1"
+        versionCode = 64
+        versionName = "1.8.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -74,15 +81,15 @@ android {
         // use local file if available or Environment variables (for CI)
         create("release") {
             if (keyPropertiesFile.exists()) {
-                storeFile = file(keyProperties["store"] as String? ?: "release.pfk")
+                storeFile = file(keyProperties["store"] as String? ?: "release.jks")
                 storePassword = keyProperties["releaseStorePassword"] as String
                 keyAlias = keyProperties["keyAlias"] as String
                 keyPassword = keyProperties["releaseStorePassword"] as String
             } else {
-                storeFile = file(System.getenv("KEYSTORE") ?: "release.pfk")
-                storePassword = System.getenv("KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("KEY_ALIAS")
-                keyPassword = System.getenv("KEY_PASSWORD")
+                storeFile = file(System.getenv("KEYSTORE") ?: "release.jks")
+                storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "unchained123"
+                keyAlias = System.getenv("KEY_ALIAS") ?: "unchained"
+                keyPassword = System.getenv("KEY_PASSWORD") ?: "unchained123"
             }
         }
     }
@@ -136,6 +143,7 @@ android {
     }
 
     testOptions { unitTests { isIncludeAndroidResources = true } }
+    lint { checkReleaseBuilds = false }
 }
 
 dependencies {

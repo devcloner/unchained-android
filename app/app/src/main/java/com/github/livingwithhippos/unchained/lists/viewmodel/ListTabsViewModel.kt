@@ -15,12 +15,16 @@ import androidx.paging.liveData
 import com.github.livingwithhippos.unchained.data.model.DownloadItem
 import com.github.livingwithhippos.unchained.data.model.TorrentItem
 import com.github.livingwithhippos.unchained.data.model.UnchainedNetworkException
+import com.github.livingwithhippos.unchained.data.model.toDirectDownloadItems
+import com.github.livingwithhippos.unchained.data.repository.DebridLinkRepository
 import com.github.livingwithhippos.unchained.data.repository.DownloadRepository
 import com.github.livingwithhippos.unchained.data.repository.TorrentsRepository
 import com.github.livingwithhippos.unchained.data.repository.UnrestrictRepository
 import com.github.livingwithhippos.unchained.lists.model.DownloadPagingSource
 import com.github.livingwithhippos.unchained.lists.model.TorrentPagingSource
+import com.github.livingwithhippos.unchained.utilities.DEBRID_PROVIDER_PREF_KEY
 import com.github.livingwithhippos.unchained.utilities.DOWNLOADS_TAB
+import com.github.livingwithhippos.unchained.utilities.DebridProvider
 import com.github.livingwithhippos.unchained.utilities.EitherResult
 import com.github.livingwithhippos.unchained.utilities.Event
 import com.github.livingwithhippos.unchained.utilities.postEvent
@@ -42,6 +46,7 @@ constructor(
     private val downloadRepository: DownloadRepository,
     private val torrentsRepository: TorrentsRepository,
     private val unrestrictRepository: UnrestrictRepository,
+    private val debridLinkRepository: DebridLinkRepository,
 ) : ViewModel() {
 
     // stores the last query value
@@ -63,8 +68,17 @@ constructor(
         queryLiveData.switchMap { query: String ->
             val size = getPagingSize()
             val initialSize = max(size, INITIAL_LOAD)
+            val provider =
+                DebridProvider.fromId(
+                    preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.REAL_DEBRID.id)
+                )
             Pager(PagingConfig(pageSize = size, initialLoadSize = initialSize)) {
-                    TorrentPagingSource(torrentsRepository, query)
+                    TorrentPagingSource(
+                        torrentsRepository = torrentsRepository,
+                        query = query,
+                        provider = provider,
+                        debridLinkRepository = debridLinkRepository,
+                    )
                 }
                 .liveData
                 .cachedIn(viewModelScope)
@@ -89,6 +103,15 @@ constructor(
      */
     fun unrestrictTorrent(torrent: TorrentItem) {
         viewModelScope.launch {
+            val provider =
+                DebridProvider.fromId(
+                    preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.REAL_DEBRID.id)
+                )
+            if (provider == DebridProvider.DEBRID_LINK) {
+                val directDownloads = torrent.toDirectDownloadItems()
+                downloadItemLiveData.postEvent(directDownloads)
+                return@launch
+            }
             val items = unrestrictRepository.getUnrestrictedLinkList(torrent.links)
             val values =
                 items.filterIsInstance<EitherResult.Success<DownloadItem>>().map { it.success }
@@ -146,10 +169,23 @@ constructor(
 
     fun deleteAllTorrents() {
         viewModelScope.launch {
-            do {
-                val torrents = torrentsRepository.getTorrentsList(0, 1, 50)
-                torrents.forEach { torrentsRepository.deleteTorrent(it.id) }
-            } while (torrents.size >= 50)
+            val provider =
+                DebridProvider.fromId(
+                    preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.REAL_DEBRID.id)
+                )
+            if (provider == DebridProvider.DEBRID_LINK) {
+                when (val seedbox = debridLinkRepository.getSeedboxList()) {
+                    is EitherResult.Success -> {
+                        seedbox.success.forEach { debridLinkRepository.deleteTorrent(it.id) }
+                    }
+                    is EitherResult.Failure -> {}
+                }
+            } else {
+                do {
+                    val torrents = torrentsRepository.getTorrentsList(0, 1, 50)
+                    torrents.forEach { torrentsRepository.deleteTorrent(it.id) }
+                } while (torrents.size >= 50)
+            }
 
             deletedTorrentLiveData.postEvent(TORRENTS_DELETED_ALL)
         }
@@ -157,7 +193,15 @@ constructor(
 
     fun deleteTorrents(torrents: List<TorrentItem>) {
         viewModelScope.launch {
-            torrents.forEach { torrentsRepository.deleteTorrent(it.id) }
+            val provider =
+                DebridProvider.fromId(
+                    preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.REAL_DEBRID.id)
+                )
+            if (provider == DebridProvider.DEBRID_LINK) {
+                torrents.forEach { debridLinkRepository.deleteTorrent(it.id) }
+            } else {
+                torrents.forEach { torrentsRepository.deleteTorrent(it.id) }
+            }
             if (torrents.size > 1) deletedTorrentLiveData.postEvent(TORRENTS_DELETED)
             else deletedTorrentLiveData.postEvent(TORRENT_DELETED)
         }

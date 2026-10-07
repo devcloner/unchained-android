@@ -1,0 +1,67 @@
+stages:
+  - verify
+  - build
+
+variables:
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+  # The cirruslabs image ships openjdk-21 under this path.
+  JAVA_HOME: "/usr/lib/jvm/java-21-openjdk-amd64"
+  ANDROID_HOME: "/opt/android-sdk-linux"
+  ANDROID_SDK_ROOT: "/opt/android-sdk-linux"
+
+# Shared setup: the base image carries API 36, this project compiles against API 37.
+.default_android:
+  image: ghcr.io/cirruslabs/android-sdk:36
+  interruptible: true
+  cache:
+    key:
+      files:
+        - app/gradle/libs.versions.toml
+        - app/gradle/wrapper/gradle-wrapper.properties
+    paths:
+      - .gradle/caches/
+      - .gradle/wrapper/
+    policy: pull-push
+  before_script:
+    - sdkmanager --install "platforms;android-37.0" "build-tools;37.0.0" > /dev/null
+    - cd app
+    - chmod +x gradlew
+
+unit_tests:
+  extends: .default_android
+  stage: verify
+  script:
+    - ./gradlew --no-daemon testDebugUnitTest
+  artifacts:
+    when: always
+    reports:
+      junit: app/app/build/test-results/testDebugUnitTest/*.xml
+    paths:
+      - app/app/build/reports/tests/testDebugUnitTest/
+    expire_in: 14 days
+
+lint:
+  extends: .default_android
+  stage: verify
+  allow_failure: true
+  script:
+    - ./gradlew --no-daemon lintDebug
+  artifacts:
+    when: always
+    paths:
+      - app/app/build/reports/lint-results-debug.html
+      - app/app/build/reports/lint-results-debug.xml
+    expire_in: 14 days
+
+# needs: [] keeps this running even when verify fails, so an APK is always produced.
+debug_apk:
+  extends: .default_android
+  stage: build
+  needs: []
+  script:
+    - ./gradlew --no-daemon assembleDebug
+  artifacts:
+    name: "unchained-multidebrid-debug-$CI_COMMIT_SHORT_SHA"
+    paths:
+      - app/app/build/outputs/apk/debug/*.apk
+    expire_in: 30 days

@@ -15,9 +15,16 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
+import androidx.preference.SwitchPreferenceCompat
+import androidx.appcompat.app.AlertDialog
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.github.livingwithhippos.unchained.R
+import com.github.livingwithhippos.unchained.data.repository.DebridLinkRepository
+import com.github.livingwithhippos.unchained.utilities.DebridDiagnostics
 import com.github.livingwithhippos.unchained.settings.viewmodel.SettingEvent
 import com.github.livingwithhippos.unchained.settings.viewmodel.SettingsViewModel
 import com.github.livingwithhippos.unchained.utilities.FEEDBACK_URL
@@ -40,6 +47,7 @@ import timber.log.Timber
 @AndroidEntryPoint
 class SettingsFragment : PreferenceFragmentCompat() {
     @Inject lateinit var preferences: SharedPreferences
+    @Inject lateinit var debridLinkRepository: DebridLinkRepository
 
     private val viewModel: SettingsViewModel by activityViewModels()
 
@@ -83,8 +91,56 @@ class SettingsFragment : PreferenceFragmentCompat() {
             true
         }
 
+        DebridDiagnostics.setEnabled(preferences.getBoolean("diagnostics_enabled", false))
+        findPreference<SwitchPreferenceCompat>("diagnostics_enabled")?.setOnPreferenceChangeListener { _, value ->
+            DebridDiagnostics.setEnabled(value == true)
+            true
+        }
+        findPreference<Preference>("diagnostics_view")?.setOnPreferenceClickListener {
+            val filter = preferences.getString("diagnostics_level", "ALL") ?: "ALL"
+            val text = DebridDiagnostics.snapshot(filter)
+            AlertDialog.Builder(requireContext())
+                .setTitle(getString(R.string.diagnostics_view))
+                .setMessage(text)
+                .setPositiveButton(getString(R.string.diagnostics_copy)) { _, _ ->
+                    val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    clipboard.setPrimaryClip(ClipData.newPlainText("Debrid-Link diagnostics", text))
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+            true
+        }
+        findPreference<Preference>("diagnostics_clear")?.setOnPreferenceClickListener {
+            DebridDiagnostics.clear()
+            true
+        }
+
         findPreference<Preference>("user_logout")?.setOnPreferenceClickListener {
             viewModel.userLogout()
+            true
+        }
+
+        findPreference<EditTextPreference>("debrid_link_api_key")?.apply {
+            // Never show the token as a preference summary, even briefly.
+            summary = getString(R.string.debrid_link_key_summary)
+            setOnBindEditTextListener { edit ->
+                edit.inputType = android.text.InputType.TYPE_CLASS_TEXT or
+                    android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+            }
+            setOnPreferenceChangeListener { _, value ->
+                val token = (value as? String)?.trim().orEmpty()
+                if (token.isBlank()) {
+                    debridLinkRepository.logout()
+                } else {
+                    debridLinkRepository.setApiKey(token)
+                }
+                // Store it only in the dedicated credential store, not the preference's own entry.
+                false
+            }
+        }
+        findPreference<Preference>("debrid_link_remove")?.setOnPreferenceClickListener {
+            debridLinkRepository.logout()
+            context?.showToast(R.string.debrid_link_key_removed)
             true
         }
 

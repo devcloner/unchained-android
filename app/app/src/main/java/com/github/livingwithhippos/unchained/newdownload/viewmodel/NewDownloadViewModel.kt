@@ -1,16 +1,21 @@
 package com.github.livingwithhippos.unchained.newdownload.viewmodel
 
+import android.content.SharedPreferences
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.livingwithhippos.unchained.data.model.DownloadItem
 import com.github.livingwithhippos.unchained.data.model.UnchainedNetworkException
 import com.github.livingwithhippos.unchained.data.model.UploadedTorrent
+import com.github.livingwithhippos.unchained.data.repository.DebridLinkRepository
 import com.github.livingwithhippos.unchained.data.repository.HostsRepository
 import com.github.livingwithhippos.unchained.data.repository.TorrentsRepository
 import com.github.livingwithhippos.unchained.data.repository.UnrestrictRepository
+import com.github.livingwithhippos.unchained.utilities.DEBRID_PROVIDER_PREF_KEY
+import com.github.livingwithhippos.unchained.utilities.DebridProvider
 import com.github.livingwithhippos.unchained.utilities.EitherResult
 import com.github.livingwithhippos.unchained.utilities.Event
+import com.github.livingwithhippos.unchained.utilities.extension.isMagnet
 import com.github.livingwithhippos.unchained.utilities.postEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.regex.Matcher
@@ -27,6 +32,8 @@ constructor(
     private val unrestrictRepository: UnrestrictRepository,
     private val torrentsRepository: TorrentsRepository,
     private val hostsRepository: HostsRepository,
+    private val debridLinkRepository: DebridLinkRepository,
+    private val preferences: SharedPreferences,
 ) : ViewModel() {
 
     // use Event since navigating back to this fragment would trigger this observable again
@@ -35,6 +42,67 @@ constructor(
     val networkExceptionLiveData = MutableLiveData<Event<UnchainedNetworkException>>()
     val linkLiveData = MutableLiveData<Event<Link>>()
     val toastLiveData = MutableLiveData<Event<String>>()
+    val debridLinkResult = MutableLiveData<Event<DebridLinkAddResult>>()
+
+    fun sendMagnetToDebridLink(magnet: String) {
+        if (!magnet.isMagnet()) {
+            debridLinkResult.postEvent(DebridLinkAddResult.InvalidMagnet)
+            return
+        }
+        if (!debridLinkRepository.isConfigured()) {
+            debridLinkResult.postEvent(DebridLinkAddResult.MissingKey)
+            return
+        }
+        viewModelScope.launch {
+            val trimmed = magnet.trim()
+            val target = if (trimmed.matches("^[a-fA-F0-9]{40}$".toRegex()) || trimmed.matches("^[a-zA-Z2-7]{32}$".toRegex())) {
+                "magnet:?xt=urn:btih:$trimmed"
+            } else trimmed
+
+            when (val res = debridLinkRepository.addMagnet(target)) {
+                is EitherResult.Success -> debridLinkResult.postEvent(DebridLinkAddResult.Added)
+                is EitherResult.Failure -> {
+                    val err = (res.failure as? com.github.livingwithhippos.unchained.data.model.DebridLinkError)?.error
+                    if (!err.isNullOrBlank()) {
+                        debridLinkResult.postEvent(DebridLinkAddResult.FailedWithError(err))
+                    } else {
+                        debridLinkResult.postEvent(DebridLinkAddResult.Failed)
+                    }
+                }
+            }
+        }
+    }
+
+    fun sendHostLinkToDebridLink(url: String) {
+        if (!debridLinkRepository.isConfigured()) {
+            debridLinkResult.postEvent(DebridLinkAddResult.MissingKey)
+            return
+        }
+        viewModelScope.launch {
+            when (debridLinkRepository.addHostLink(url)) {
+                is EitherResult.Success -> debridLinkResult.postEvent(DebridLinkAddResult.HostAdded)
+                is EitherResult.Failure -> debridLinkResult.postEvent(DebridLinkAddResult.Failed)
+            }
+        }
+    }
+
+    fun sendTorrentToDebridLink(binaryTorrent: ByteArray, fileName: String = "upload.torrent") {
+        if (!debridLinkRepository.isConfigured()) {
+            debridLinkResult.postEvent(DebridLinkAddResult.MissingKey)
+            return
+        }
+        viewModelScope.launch {
+            when (debridLinkRepository.addTorrent(binaryTorrent, fileName)) {
+                is EitherResult.Success -> debridLinkResult.postEvent(DebridLinkAddResult.TorrentAdded)
+                is EitherResult.Failure -> debridLinkResult.postEvent(DebridLinkAddResult.Failed)
+            }
+        }
+    }
+
+    fun getSelectedProvider(): DebridProvider =
+        DebridProvider.fromId(preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.REAL_DEBRID.id))
+
+    fun isDebridLinkConfigured() = debridLinkRepository.isConfigured()
 
     fun fetchUnrestrictedLink(link: String, password: String?, remote: Int? = null) {
         viewModelScope.launch {
@@ -111,6 +179,16 @@ constructor(
     fun postMessage(message: String) {
         toastLiveData.postEvent(message)
     }
+}
+
+sealed class DebridLinkAddResult {
+    data object Added : DebridLinkAddResult()
+    data object HostAdded : DebridLinkAddResult()
+    data object TorrentAdded : DebridLinkAddResult()
+    data object Failed : DebridLinkAddResult()
+    data class FailedWithError(val error: String) : DebridLinkAddResult()
+    data object MissingKey : DebridLinkAddResult()
+    data object InvalidMagnet : DebridLinkAddResult()
 }
 
 sealed class Link {

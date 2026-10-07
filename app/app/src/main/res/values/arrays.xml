@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string-array name="diagnostics_level_labels" translatable="false">
+        <item>Show all</item><item>Errors only</item><item>Issues only</item><item>Information only</item>
+    </string-array>
+    <string-array name="diagnostics_level_values" translatable="false">
+        <item>ALL</item><item>ERROR</item><item>ISSUE</item><item>INFO</item>
+    </string-array>
     <array name="preloaded_fonts" translatable="false">
         <item>@font/roboto_light</item>
     </array>
@@ -47,6 +53,16 @@
     <string-array name="search_start_destination_values">
         <item>previous</item>
         <item>new</item>
+    </string-array>
+
+    <string-array name="debrid_provider_entries">
+        <item>Real-Debrid</item>
+        <item>Debrid-Link</item>
+    </string-array>
+
+    <string-array name="debrid_provider_values">
+        <item>real_debrid</item>
+        <item>debrid_link</item>
     </string-array>
 
     <string-array name="doh_provider" >

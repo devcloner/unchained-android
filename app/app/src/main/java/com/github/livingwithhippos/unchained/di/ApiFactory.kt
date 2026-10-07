@@ -9,6 +9,9 @@ import com.github.livingwithhippos.unchained.data.remote.AuthenticationApi
 import com.github.livingwithhippos.unchained.data.remote.CustomDownload
 import com.github.livingwithhippos.unchained.data.remote.CustomDownloadHelper
 import com.github.livingwithhippos.unchained.data.remote.CustomDownloadHelperImpl
+import com.github.livingwithhippos.unchained.data.remote.debridlink.DebridLinkApi
+import com.github.livingwithhippos.unchained.data.remote.debridlink.DebridLinkApiHelper
+import com.github.livingwithhippos.unchained.data.remote.debridlink.DebridLinkApiHelperImpl
 import com.github.livingwithhippos.unchained.data.remote.DownloadApi
 import com.github.livingwithhippos.unchained.data.remote.DownloadApiHelper
 import com.github.livingwithhippos.unchained.data.remote.DownloadApiHelperImpl
@@ -36,6 +39,7 @@ import com.github.livingwithhippos.unchained.data.remote.VariousApiHelperImpl
 import com.github.livingwithhippos.unchained.plugins.Parser
 import com.github.livingwithhippos.unchained.utilities.BASE_AUTH_URL
 import com.github.livingwithhippos.unchained.utilities.BASE_URL
+import com.github.livingwithhippos.unchained.utilities.DEBRID_LINK_BASE_URL
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -346,4 +350,29 @@ object ApiFactory {
         @ClassicClient classicClient: OkHttpClient,
         @DOHClient dohClient: OkHttpClient,
     ): Parser = Parser(preferences, classicClient, dohClient)
+
+    /** Debrid-Link (API v2) */
+
+    @Provides
+    @Singleton
+    @DebridLinkRetrofit
+    fun debridLinkRetrofit(): Retrofit =
+        Retrofit.Builder()
+            // Do not reuse the Real-Debrid debug client: its BODY logger exposes bearer keys
+            // and magnet URLs. This isolated client has no HTTP logging interceptor.
+            .client(OkHttpClient.Builder().addInterceptor(EmptyBodyInterceptor).build())
+            .baseUrl(DEBRID_LINK_BASE_URL)
+            .addConverterFactory(ScalarsConverterFactory.create())
+            .addConverterFactory(MoshiConverterFactory.create())
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideDebridLinkApi(@DebridLinkRetrofit retrofit: Retrofit): DebridLinkApi =
+        retrofit.create(DebridLinkApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideDebridLinkApiHelper(apiHelper: DebridLinkApiHelperImpl): DebridLinkApiHelper =
+        apiHelper
 }

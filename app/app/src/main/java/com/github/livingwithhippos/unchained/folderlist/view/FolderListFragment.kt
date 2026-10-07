@@ -30,6 +30,7 @@ import com.github.livingwithhippos.unchained.data.model.ApiConversionError
 import com.github.livingwithhippos.unchained.data.model.DownloadItem
 import com.github.livingwithhippos.unchained.data.model.EmptyBodyError
 import com.github.livingwithhippos.unchained.data.model.NetworkError
+import com.github.livingwithhippos.unchained.data.model.toDirectDownloadItems
 import com.github.livingwithhippos.unchained.databinding.FragmentFolderListBinding
 import com.github.livingwithhippos.unchained.folderlist.model.FolderDetailsLookup
 import com.github.livingwithhippos.unchained.folderlist.model.FolderItemAdapter
@@ -297,7 +298,13 @@ class FolderListFragment : UnchainedFragment(), DownloadListListener {
             args.folder != null -> viewModel.retrieveFolderFileList(args.folder!!)
             args.torrent != null -> {
                 binding.tvTitle.text = args.torrent!!.filename
-                viewModel.retrieveFiles(args.torrent!!.links)
+                if (args.torrent!!.host == "debrid-link.fr") {
+                    val directItems = args.torrent!!.toDirectDownloadItems()
+                    viewModel.folderLiveData.postValue(com.github.livingwithhippos.unchained.utilities.Event(directItems))
+                    binding.progressIndicator.progress = 100
+                } else {
+                    viewModel.retrieveFiles(args.torrent!!.links)
+                }
             }
 
             args.linkList != null -> {

@@ -51,6 +51,9 @@ import com.github.livingwithhippos.unchained.statemachine.authentication.Current
 import com.github.livingwithhippos.unchained.statemachine.authentication.FSMAuthenticationEvent
 import com.github.livingwithhippos.unchained.statemachine.authentication.FSMAuthenticationSideEffect
 import com.github.livingwithhippos.unchained.statemachine.authentication.FSMAuthenticationState
+import com.github.livingwithhippos.unchained.utilities.DEBRID_LINK_API_KEY_PREF_KEY
+import com.github.livingwithhippos.unchained.utilities.DEBRID_PROVIDER_PREF_KEY
+import com.github.livingwithhippos.unchained.utilities.DebridProvider
 import com.github.livingwithhippos.unchained.utilities.EMBEDDED_DOWNLOAD_WORK_TAG
 import com.github.livingwithhippos.unchained.utilities.EitherResult
 import com.github.livingwithhippos.unchained.utilities.Event
@@ -774,6 +777,13 @@ constructor(
         accessToken: String? = null,
         refreshToken: String? = null,
     ) {
+        val token = accessToken?.trim().orEmpty()
+        if (token.isNotBlank()) {
+            val selectedProvider = preferences.getString(DEBRID_PROVIDER_PREF_KEY, "")
+            if (token.startsWith("apk_") || selectedProvider == DebridProvider.DEBRID_LINK.id) {
+                preferences.edit().putString(DEBRID_LINK_API_KEY_PREF_KEY, token).apply()
+            }
+        }
         viewModelScope.launch {
             protoStore.updateCredentials(
                 deviceCode,
@@ -806,6 +816,13 @@ constructor(
     /** Start the authentication machine flow */
     fun startAuthenticationMachine() {
         viewModelScope.launch {
+            val dlKey = preferences.getString(DEBRID_LINK_API_KEY_PREF_KEY, null)
+            val selectedProvider = preferences.getString(DEBRID_PROVIDER_PREF_KEY, null)
+            if (selectedProvider == DebridProvider.DEBRID_LINK.id || !dlKey.isNullOrBlank()) {
+                fsmAuthenticationState.postValue(Event(FSMAuthenticationState.AuthenticatedPrivateToken))
+                return@launch
+            }
+
             // retrieve the datastore credentials (will return en empty instance if none)
             val protoCredentials = protoStore.getCredentials()
             if (protoCredentials.accessToken.isNotBlank()) {
@@ -830,15 +847,27 @@ constructor(
      *
      * @return CurrentFSMAuthentication
      */
-    fun getCurrentAuthenticationStatus(): CurrentFSMAuthentication =
-        when (getAuthenticationMachineState()) {
+    fun getCurrentAuthenticationStatus(): CurrentFSMAuthentication {
+        val dlKey = preferences.getString(DEBRID_LINK_API_KEY_PREF_KEY, null)
+        val selectedProvider = preferences.getString(DEBRID_PROVIDER_PREF_KEY, null)
+        if (selectedProvider == DebridProvider.DEBRID_LINK.id && !dlKey.isNullOrBlank()) {
+            return CurrentFSMAuthentication.Authenticated
+        }
+        return when (getAuthenticationMachineState()) {
             FSMAuthenticationState.AuthenticatedPrivateToken,
             FSMAuthenticationState.AuthenticatedOpenToken -> CurrentFSMAuthentication.Authenticated
             FSMAuthenticationState.Start,
             FSMAuthenticationState.CheckCredentials,
-            FSMAuthenticationState.RefreshingOpenToken -> CurrentFSMAuthentication.Waiting
-            else -> CurrentFSMAuthentication.Unauthenticated
+            FSMAuthenticationState.RefreshingOpenToken -> {
+                if (!dlKey.isNullOrBlank()) CurrentFSMAuthentication.Authenticated
+                else CurrentFSMAuthentication.Waiting
+            }
+            else -> {
+                if (!dlKey.isNullOrBlank()) CurrentFSMAuthentication.Authenticated
+                else CurrentFSMAuthentication.Unauthenticated
+            }
         }
+    }
 
     fun transitionAuthenticationMachine(event: FSMAuthenticationEvent) {
         authStateMachine.transition(event)

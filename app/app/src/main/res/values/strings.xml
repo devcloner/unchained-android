@@ -1,5 +1,31 @@
 <resources>
     <string name="app_name" translatable="false">Unchained</string>
+    <string name="debrid_link_api_key_title" translatable="false">Debrid-Link API key</string>
+    <string name="debrid_link_key_summary" translatable="false">Get a personal key at debrid-link.com/webapp/apikey. Never share it.</string>
+    <string name="debrid_link_remove_key" translatable="false">Remove Debrid-Link key</string>
+    <string name="debrid_link_key_removed" translatable="false">Debrid-Link key removed</string>
+    <string name="debrid_link_no_key" translatable="false">Add your Debrid-Link API key in Settings first</string>
+    <string name="debrid_link_add_success" translatable="false">Magnet added to Debrid-Link seedbox</string>
+    <string name="debrid_link_add_error" translatable="false">Debrid-Link request failed; enable diagnostics in Settings</string>
+    <string name="debrid_link_add_action" translatable="false">Send magnet to Debrid-Link</string>
+    <string name="debrid_link_invalid_magnet" translatable="false">Enter a valid magnet link</string>
+    <string name="debrid_provider_title" translatable="false">Active debrid provider</string>
+    <string name="debrid_provider_summary" translatable="false">Choose the active debrid service for magnets and downloads</string>
+    <string name="debrid_link_host_success" translatable="false">Link added to Debrid-Link downloader</string>
+    <string name="debrid_link_torrent_success" translatable="false">Torrent uploaded to Debrid-Link seedbox</string>
+    <string name="debrid_link_clipboard_detected" translatable="false">Magnet detected from clipboard</string>
+    <string name="send_to_debrid_link" translatable="false">Download with Debrid-Link</string>
+    <string name="send_to_real_debrid" translatable="false">Download with Real-Debrid</string>
+    <string name="torrent_search_providers" translatable="false">Torrent search providers</string>
+    <string name="auth_with_debrid_link" translatable="false">Authenticated with Debrid-Link</string>
+    <string name="get_api_here" translatable="false">Get API Key Here</string>
+    <string name="debrid_link_api_key_page_hint" translatable="false">Debrid-Link active. Tap here or the button below to get your API key from debrid-link.com/webapp/apikey.</string>
+    <string name="diagnostics_title" translatable="false">Debrid-Link diagnostics</string>
+    <string name="diagnostics_enabled" translatable="false">Enable verbose diagnostics</string>
+    <string name="diagnostics_level" translatable="false">Only show</string>
+    <string name="diagnostics_view" translatable="false">View and copy diagnostics</string>
+    <string name="diagnostics_copy" translatable="false">Copy</string>
+    <string name="diagnostics_clear" translatable="false">Clear diagnostics</string>
     <string name="google" translatable="false">Google</string>
     <string name="cloudflare" translatable="false">Cloudflare</string>
     <string name="quad9" translatable="false">Quad9</string>
