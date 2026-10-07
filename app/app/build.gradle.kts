@@ -143,6 +143,7 @@ android {
     }
 
     testOptions { unitTests { isIncludeAndroidResources = true } }
+    lint { checkReleaseBuilds = false }
 }
 
 dependencies {
