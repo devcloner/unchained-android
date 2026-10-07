@@ -100,7 +100,7 @@ constructor(
     }
 
     fun getSelectedProvider(): DebridProvider =
-        DebridProvider.fromId(preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.REAL_DEBRID.id))
+        DebridProvider.fromId(preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.DEBRID_LINK.id))
 
     fun isDebridLinkConfigured() = debridLinkRepository.isConfigured()
 

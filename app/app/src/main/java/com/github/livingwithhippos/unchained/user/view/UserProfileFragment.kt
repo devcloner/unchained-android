@@ -58,8 +58,8 @@ class UserProfileFragment : UnchainedFragment() {
         val view = binding.root
 
         val isDebridLink =
-            preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.REAL_DEBRID.id) ==
-                DebridProvider.DEBRID_LINK.id || debridLinkRepository.isConfigured()
+            preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.DEBRID_LINK.id) ==
+                DebridProvider.DEBRID_LINK.id
 
         if (isDebridLink) {
             binding.tvDescription.text = getString(R.string.auth_with_debrid_link)

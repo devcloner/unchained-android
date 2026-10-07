@@ -12,7 +12,7 @@ enum class DebridProvider(val id: String) {
     DEBRID_LINK("debrid_link");
 
     companion object {
-        fun fromId(id: String?): DebridProvider = entries.firstOrNull { it.id == id } ?: REAL_DEBRID
+        fun fromId(id: String?): DebridProvider = entries.firstOrNull { it.id == id } ?: DEBRID_LINK
     }
 }
 

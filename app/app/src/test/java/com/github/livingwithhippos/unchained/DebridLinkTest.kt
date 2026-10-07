@@ -236,7 +236,7 @@ class DebridLinkTest {
     fun `debrid provider resolution defaults safely`() {
         assertEquals(DebridProvider.REAL_DEBRID, DebridProvider.fromId("real_debrid"))
         assertEquals(DebridProvider.DEBRID_LINK, DebridProvider.fromId("debrid_link"))
-        assertEquals(DebridProvider.REAL_DEBRID, DebridProvider.fromId(null))
-        assertEquals(DebridProvider.REAL_DEBRID, DebridProvider.fromId("unknown_provider"))
+        assertEquals(DebridProvider.DEBRID_LINK, DebridProvider.fromId(null))
+        assertEquals(DebridProvider.DEBRID_LINK, DebridProvider.fromId("unknown_provider"))
     }
 }

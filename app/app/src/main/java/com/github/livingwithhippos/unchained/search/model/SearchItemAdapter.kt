@@ -46,12 +46,15 @@ class SearchItemViewHolder(
         binding.tvName.text = item.name.trim()
 
         val linksCount = item.magnets.size + item.torrents.size + item.hosting.size
-        binding.tvLinks.text =
+        val links =
             itemView.context.resources.getQuantityString(
                 R.plurals.links_format,
                 linksCount,
                 linksCount,
             )
+        binding.tvLinks.text =
+            item.provider?.let { itemView.context.getString(R.string.via_provider_format, links, it) }
+                ?: links
         binding.tvLinks.visibility =
             if (item.magnets.isEmpty() && item.hosting.isEmpty()) View.GONE else View.VISIBLE
 

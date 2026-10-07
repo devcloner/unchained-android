@@ -17,4 +17,6 @@ data class ScrapedItem(
     val magnets: List<String>,
     val torrents: List<String>,
     val hosting: List<String>,
+    /** Search provider that produced this row, for the "via <provider>" hint. */
+    val provider: String? = null,
 ) : Parcelable

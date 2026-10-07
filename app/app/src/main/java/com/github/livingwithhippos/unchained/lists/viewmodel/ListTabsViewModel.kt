@@ -70,7 +70,7 @@ constructor(
             val initialSize = max(size, INITIAL_LOAD)
             val provider =
                 DebridProvider.fromId(
-                    preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.REAL_DEBRID.id)
+                    preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.DEBRID_LINK.id)
                 )
             Pager(PagingConfig(pageSize = size, initialLoadSize = initialSize)) {
                     TorrentPagingSource(
@@ -105,7 +105,7 @@ constructor(
         viewModelScope.launch {
             val provider =
                 DebridProvider.fromId(
-                    preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.REAL_DEBRID.id)
+                    preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.DEBRID_LINK.id)
                 )
             if (provider == DebridProvider.DEBRID_LINK) {
                 val directDownloads = torrent.toDirectDownloadItems()
@@ -171,7 +171,7 @@ constructor(
         viewModelScope.launch {
             val provider =
                 DebridProvider.fromId(
-                    preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.REAL_DEBRID.id)
+                    preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.DEBRID_LINK.id)
                 )
             if (provider == DebridProvider.DEBRID_LINK) {
                 when (val seedbox = debridLinkRepository.getSeedboxList()) {
@@ -195,7 +195,7 @@ constructor(
         viewModelScope.launch {
             val provider =
                 DebridProvider.fromId(
-                    preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.REAL_DEBRID.id)
+                    preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.DEBRID_LINK.id)
                 )
             if (provider == DebridProvider.DEBRID_LINK) {
                 torrents.forEach { debridLinkRepository.deleteTorrent(it.id) }

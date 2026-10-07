@@ -56,13 +56,29 @@
     </string-array>
 
     <string-array name="debrid_provider_entries">
-        <item>Real-Debrid</item>
         <item>Debrid-Link</item>
+        <item>Real-Debrid</item>
     </string-array>
 
     <string-array name="debrid_provider_values">
-        <item>real_debrid</item>
         <item>debrid_link</item>
+        <item>real_debrid</item>
+    </string-array>
+
+    <string-array name="search_sort_entries">
+        <item>@string/search_sort_default</item>
+        <item>@string/search_sort_seeders</item>
+        <item>@string/search_sort_size</item>
+        <item>@string/search_sort_date</item>
+        <item>@string/search_sort_name</item>
+    </string-array>
+
+    <string-array name="search_sort_values">
+        <item>default</item>
+        <item>seeders</item>
+        <item>size</item>
+        <item>date</item>
+        <item>name</item>
     </string-array>
 
     <string-array name="doh_provider" >
