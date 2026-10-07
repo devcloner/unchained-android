@@ -30,6 +30,7 @@ import com.github.livingwithhippos.unchained.newdownload.viewmodel.NewDownloadVi
 import com.github.livingwithhippos.unchained.statemachine.authentication.FSMAuthenticationEvent
 import com.github.livingwithhippos.unchained.statemachine.authentication.FSMAuthenticationState
 import com.github.livingwithhippos.unchained.utilities.CONTAINER_EXTENSION_PATTERN
+import com.github.livingwithhippos.unchained.utilities.DebridProvider
 import com.github.livingwithhippos.unchained.utilities.EventObserver
 import com.github.livingwithhippos.unchained.utilities.REMOTE_TRAFFIC_ON
 import com.github.livingwithhippos.unchained.utilities.SCHEME_HTTP
@@ -92,11 +93,14 @@ class NewDownloadFragment : UnchainedFragment() {
             EventObserver { result ->
                 val message = when (result) {
                     DebridLinkAddResult.Added -> R.string.debrid_link_add_success
+                    DebridLinkAddResult.HostAdded -> R.string.debrid_link_host_success
+                    DebridLinkAddResult.TorrentAdded -> R.string.debrid_link_torrent_success
                     DebridLinkAddResult.Failed -> R.string.debrid_link_add_error
                     DebridLinkAddResult.MissingKey -> R.string.debrid_link_no_key
                     DebridLinkAddResult.InvalidMagnet -> R.string.debrid_link_invalid_magnet
                 }
                 viewModel.postMessage(getString(message))
+                enableButtons(binding, true)
                 binding.bDebridLink.isEnabled = true
             },
         )
@@ -284,10 +288,13 @@ class NewDownloadFragment : UnchainedFragment() {
         // add the unrestrict button listener
         binding.bUnrestrict.setOnClickListener {
             val authState = activityViewModel.getAuthenticationMachineState()
-            if (
+            val isDebridLinkActive = viewModel.getSelectedProvider() == DebridProvider.DEBRID_LINK
+            val isAuthed =
                 authState is FSMAuthenticationState.AuthenticatedPrivateToken ||
-                    authState is FSMAuthenticationState.AuthenticatedOpenToken
-            ) {
+                    authState is FSMAuthenticationState.AuthenticatedOpenToken ||
+                    (isDebridLinkActive && viewModel.isDebridLinkConfigured())
+
+            if (isAuthed) {
                 val link: String = binding.tiLink.text.toString().trim()
 
                 val splitLinks: List<String> =
@@ -316,35 +323,34 @@ class NewDownloadFragment : UnchainedFragment() {
                     when {
                         // this must be before the link.isWebUrl() check or it won't trigger
                         link.isTorrent() -> {
-                            val action =
-                                NewDownloadFragmentDirections
-                                    .actionNewDownloadFragmentToTorrentProcessingFragment(
-                                        link = link
-                                    )
-                            findNavController().navigate(action)
-
-                            // viewModel.postMessage(getString(R.string.loading_torrent))
-                            // enableButtons(binding, false)
-                            /**
-                             * DownloadManager does not support insecure (https) links anymore to
-                             * add support for it, follow these instructions
-                             * [https://stackoverflow.com/a/50834600] val secureLink = if
-                             * (link.startsWith("http://")) link.replaceFirst( "http:", "https:" )
-                             * else link downloadTorrent(Uri.parse(secureLink))
-                             */
-                            // downloadTorrentToCache(binding, link)
+                            if (isDebridLinkActive) {
+                                binding.bDebridLink.isEnabled = false
+                                viewModel.sendMagnetToDebridLink(link)
+                            } else {
+                                val action =
+                                    NewDownloadFragmentDirections
+                                        .actionNewDownloadFragmentToTorrentProcessingFragment(
+                                            link = link
+                                        )
+                                findNavController().navigate(action)
+                            }
                         }
 
                         link.isMagnet() -> {
                             // this one must stay above link.isWebUrl() || link.isSimpleWebUrl()
                             // because some magnets have http in their link, getting recognized as
                             // URLs
-                            val action =
-                                NewDownloadFragmentDirections
-                                    .actionNewDownloadFragmentToTorrentProcessingFragment(
-                                        link = link
-                                    )
-                            findNavController().navigate(action)
+                            if (isDebridLinkActive) {
+                                binding.bDebridLink.isEnabled = false
+                                viewModel.sendMagnetToDebridLink(link)
+                            } else {
+                                val action =
+                                    NewDownloadFragmentDirections
+                                        .actionNewDownloadFragmentToTorrentProcessingFragment(
+                                            link = link
+                                        )
+                                findNavController().navigate(action)
+                            }
                         }
                         // put this above the web url checks since this is a web link too
                         link.isContainerWebLink() -> {
@@ -352,19 +358,24 @@ class NewDownloadFragment : UnchainedFragment() {
                         }
 
                         link.isWebUrl() || link.isSimpleWebUrl() -> {
-                            viewModel.postMessage(getString(R.string.loading_host_link))
-                            enableButtons(binding, false)
+                            if (isDebridLinkActive) {
+                                enableButtons(binding, false)
+                                viewModel.sendHostLinkToDebridLink(link)
+                            } else {
+                                viewModel.postMessage(getString(R.string.loading_host_link))
+                                enableButtons(binding, false)
 
-                            var password: String? = binding.tePassword.text.toString()
-                            // we don't pass the password if it is blank.
-                            // N.B. it won't work if your password is made up of spaces but then
-                            // again
-                            // you deserve it
-                            if (password.isNullOrBlank()) password = null
-                            val remote: Int? =
-                                if (binding.switchRemote.isChecked) REMOTE_TRAFFIC_ON else null
+                                var password: String? = binding.tePassword.text.toString()
+                                // we don't pass the password if it is blank.
+                                // N.B. it won't work if your password is made up of spaces but then
+                                // again
+                                // you deserve it
+                                if (password.isNullOrBlank()) password = null
+                                val remote: Int? =
+                                    if (binding.switchRemote.isChecked) REMOTE_TRAFFIC_ON else null
 
-                            viewModel.fetchUnrestrictedLink(link, password, remote)
+                                viewModel.fetchUnrestrictedLink(link, password, remote)
+                            }
                         }
 
                         else -> {
@@ -459,13 +470,24 @@ class NewDownloadFragment : UnchainedFragment() {
 
     private fun setupArgs(binding: NewDownloadFragmentBinding) {
 
+        if (args.externalUri == null && binding.tiLink.text.isNullOrBlank()) {
+            val clipText = getClipboardText().trim()
+            if (clipText.isMagnet()) {
+                binding.tiLink.setText(clipText, TextView.BufferType.EDITABLE)
+                viewModel.postMessage(getString(R.string.debrid_link_clipboard_detected))
+            }
+        }
+
         args.externalUri?.let { link ->
             when (link.scheme) {
                 SCHEME_MAGNET -> {
                     // set as text input text; explicit button sends to the selected provider.
                     binding.tiLink.setText(link.toString(), TextView.BufferType.EDITABLE)
-                    if (viewModel.isDebridLinkConfigured()) binding.bDebridLink.performClick()
-                    else binding.bUnrestrict.performClick()
+                    if (viewModel.getSelectedProvider() == DebridProvider.DEBRID_LINK || viewModel.isDebridLinkConfigured()) {
+                        binding.bDebridLink.performClick()
+                    } else {
+                        binding.bUnrestrict.performClick()
+                    }
                 }
 
                 SCHEME_CONTENT,
@@ -546,7 +568,13 @@ class NewDownloadFragment : UnchainedFragment() {
             viewModel.postMessage(getString(R.string.loading_torrent_file))
             requireContext().contentResolver.openInputStream(uri)?.use { inputStream ->
                 val buffer: ByteArray = inputStream.readBytes()
-                viewModel.fetchUploadedTorrent(buffer)
+                val fileName = uri.getFileName(requireContext())
+                if (viewModel.getSelectedProvider() == DebridProvider.DEBRID_LINK) {
+                    enableButtons(binding, false)
+                    viewModel.sendTorrentToDebridLink(buffer, fileName)
+                } else {
+                    viewModel.fetchUploadedTorrent(buffer)
+                }
             }
         } catch (exception: Exception) {
             when (exception) {

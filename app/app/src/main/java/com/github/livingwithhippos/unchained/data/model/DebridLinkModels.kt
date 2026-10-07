@@ -106,3 +106,31 @@ data class DebridLinkDownloaderItem(
     @param:Json(name = "uploadDate") val uploadDate: Long? = null,
     @param:Json(name = "expired") val expired: Boolean? = null,
 )
+
+/** Map a Debrid-Link seedbox torrent into the unified [TorrentItem] representation. */
+fun DebridLinkTorrent.toTorrentItem(): TorrentItem =
+    TorrentItem(
+        id = id,
+        filename = name ?: id,
+        originalFilename = name,
+        hash = hashString ?: "",
+        bytes = totalSize ?: 0L,
+        originalBytes = totalSize,
+        host = "debrid-link.fr",
+        split = 1,
+        progress = (downloadPercent ?: 0).toFloat(),
+        status = if (status == 100) "downloaded" else "downloading",
+        added = (created ?: 0L).toString(),
+        files = files.mapIndexed { idx, f ->
+            InnerTorrentFile(
+                id = idx,
+                path = f.name ?: f.id,
+                bytes = f.size ?: 0L,
+                selected = 1,
+            )
+        },
+        links = files.mapNotNull { it.downloadUrl },
+        ended = null,
+        speed = downloadSpeed?.toInt(),
+        seeders = peersConnected,
+    )

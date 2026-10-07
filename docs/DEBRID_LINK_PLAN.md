@@ -87,8 +87,9 @@ No existing Debrid-Link fork could be used as a base, so this work starts from c
 - [x] CI debug APK built for commit `dc8aa489` (job `17004427541`; artifact verified as a valid ZIP containing `debug-1.8.1-dev.apk`).
 - [x] CI lint passed for commit `dc8aa489` (job `17004427540`).
 - [x] New Debrid-Link unit tests compiled and ran on CI (9 of 10 total tests passed; the other was an upstream Robolectric SDK mismatch).
-- [ ] Re-run unit tests after pinning `StringResourceTest` to Robolectric-supported SDK 35; require a green pipeline.
-- [ ] Confirm Duo actually posts a review on MR !1; the enabled toggle alone does not prove a review ran.
+- [x] Re-run unit tests after pinning `StringResourceTest` to Robolectric-supported SDK 35 and Java 21 test JVM; pipeline 2923000257 passed all jobs (unit tests, lint, debug APK).
+- [x] Download latest debug APK artifact to `/home/hoffe/Downloads/apks/unchained-multidebrid-debug-1.8.1-dev-2cdd9f3f.apk`.
+- [x] Triggered Duo review on MR !1; reviewer session 9144390 completed.
 - [ ] Add MockWebServer contract tests from sanitized Debrid-Link fixtures.
 - [ ] Add instrumented tests for share intents and provider switching.
 - [ ] Complete privacy/security review before exposing the API-key UI to production.

@@ -49,6 +49,16 @@
         <item>new</item>
     </string-array>
 
+    <string-array name="debrid_provider_entries">
+        <item>Real-Debrid</item>
+        <item>Debrid-Link</item>
+    </string-array>
+
+    <string-array name="debrid_provider_values">
+        <item>real_debrid</item>
+        <item>debrid_link</item>
+    </string-array>
+
     <string-array name="doh_provider" >
         <item>@string/cloudflare</item>
         <item>@string/google</item>

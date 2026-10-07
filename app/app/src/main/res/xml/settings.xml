@@ -212,6 +212,15 @@
 
     <PreferenceCategory android:title="@string/title_various">
 
+        <ListPreference
+            android:defaultValue="real_debrid"
+            android:entries="@array/debrid_provider_entries"
+            android:entryValues="@array/debrid_provider_values"
+            android:key="debrid_provider"
+            android:title="@string/debrid_provider_title"
+            android:summary="@string/debrid_provider_summary"
+            app:useSimpleSummaryProvider="true" />
+
         <EditTextPreference
             android:key="debrid_link_api_key"
             android:title="@string/debrid_link_api_key_title"

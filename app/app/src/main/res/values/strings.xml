@@ -9,6 +9,11 @@
     <string name="debrid_link_add_error" translatable="false">Debrid-Link could not add this magnet</string>
     <string name="debrid_link_add_action" translatable="false">Send magnet to Debrid-Link</string>
     <string name="debrid_link_invalid_magnet" translatable="false">Enter a valid magnet link</string>
+    <string name="debrid_provider_title" translatable="false">Active debrid provider</string>
+    <string name="debrid_provider_summary" translatable="false">Choose the active debrid service for magnets and downloads</string>
+    <string name="debrid_link_host_success" translatable="false">Link added to Debrid-Link downloader</string>
+    <string name="debrid_link_torrent_success" translatable="false">Torrent uploaded to Debrid-Link seedbox</string>
+    <string name="debrid_link_clipboard_detected" translatable="false">Magnet detected from clipboard</string>
     <string name="google" translatable="false">Google</string>
     <string name="cloudflare" translatable="false">Cloudflare</string>
     <string name="quad9" translatable="false">Quad9</string>

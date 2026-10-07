@@ -4,7 +4,9 @@ import com.github.livingwithhippos.unchained.data.model.DebridLinkError
 import com.github.livingwithhippos.unchained.data.model.DebridLinkFile
 import com.github.livingwithhippos.unchained.data.model.DebridLinkResponse
 import com.github.livingwithhippos.unchained.data.model.DebridLinkTorrent
+import com.github.livingwithhippos.unchained.data.model.toTorrentItem
 import com.github.livingwithhippos.unchained.data.repository.unwrap
+import com.github.livingwithhippos.unchained.utilities.DebridProvider
 import com.github.livingwithhippos.unchained.utilities.EitherResult
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
@@ -98,5 +100,50 @@ class DebridLinkTest {
         val file = moshi.adapter(DebridLinkFile::class.java).fromJson("""{"id":"1","name":"a.txt"}""")
         assertEquals("1", file?.id)
         assertEquals(null, file?.downloadUrl)
+    }
+
+    @Test
+    fun `toTorrentItem maps DebridLinkTorrent correctly`() {
+        val dlTorrent =
+            DebridLinkTorrent(
+                id = "dl123",
+                name = "Big.Buck.Bunny.1080p.mkv",
+                hashString = "abcdef123456",
+                created = 1767234625L,
+                totalSize = 5000000L,
+                downloadPercent = 100,
+                status = 100,
+                files =
+                    listOf(
+                        DebridLinkFile(
+                            id = "f1",
+                            name = "Big.Buck.Bunny.1080p.mkv",
+                            size = 5000000L,
+                            downloadUrl = "https://dl.com/1",
+                        )
+                    ),
+                downloadSpeed = 2500.0,
+                peersConnected = 42,
+            )
+
+        val item = dlTorrent.toTorrentItem()
+        assertEquals("dl123", item.id)
+        assertEquals("Big.Buck.Bunny.1080p.mkv", item.filename)
+        assertEquals("abcdef123456", item.hash)
+        assertEquals(5000000L, item.bytes)
+        assertEquals(100f, item.progress)
+        assertEquals("downloaded", item.status)
+        assertEquals(1, item.files?.size)
+        assertEquals("https://dl.com/1", item.links.single())
+        assertEquals(2500, item.speed)
+        assertEquals(42, item.seeders)
+    }
+
+    @Test
+    fun `debrid provider resolution defaults safely`() {
+        assertEquals(DebridProvider.REAL_DEBRID, DebridProvider.fromId("real_debrid"))
+        assertEquals(DebridProvider.DEBRID_LINK, DebridProvider.fromId("debrid_link"))
+        assertEquals(DebridProvider.REAL_DEBRID, DebridProvider.fromId(null))
+        assertEquals(DebridProvider.REAL_DEBRID, DebridProvider.fromId("unknown_provider"))
     }
 }
