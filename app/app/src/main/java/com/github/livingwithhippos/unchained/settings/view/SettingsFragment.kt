@@ -18,6 +18,7 @@ import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.github.livingwithhippos.unchained.R
+import com.github.livingwithhippos.unchained.data.repository.DebridLinkRepository
 import com.github.livingwithhippos.unchained.settings.viewmodel.SettingEvent
 import com.github.livingwithhippos.unchained.settings.viewmodel.SettingsViewModel
 import com.github.livingwithhippos.unchained.utilities.FEEDBACK_URL
@@ -40,6 +41,7 @@ import timber.log.Timber
 @AndroidEntryPoint
 class SettingsFragment : PreferenceFragmentCompat() {
     @Inject lateinit var preferences: SharedPreferences
+    @Inject lateinit var debridLinkRepository: DebridLinkRepository
 
     private val viewModel: SettingsViewModel by activityViewModels()
 
@@ -85,6 +87,30 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
         findPreference<Preference>("user_logout")?.setOnPreferenceClickListener {
             viewModel.userLogout()
+            true
+        }
+
+        findPreference<EditTextPreference>("debrid_link_api_key")?.apply {
+            // Never show the token as a preference summary, even briefly.
+            summary = getString(R.string.debrid_link_key_summary)
+            setOnBindEditTextListener { edit ->
+                edit.inputType = android.text.InputType.TYPE_CLASS_TEXT or
+                    android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+            }
+            setOnPreferenceChangeListener { _, value ->
+                val token = (value as? String)?.trim().orEmpty()
+                if (token.isBlank()) {
+                    debridLinkRepository.logout()
+                } else {
+                    debridLinkRepository.setApiKey(token)
+                }
+                // Store it only in the dedicated credential store, not the preference's own entry.
+                false
+            }
+        }
+        findPreference<Preference>("debrid_link_remove")?.setOnPreferenceClickListener {
+            debridLinkRepository.logout()
+            context?.showToast(R.string.debrid_link_key_removed)
             true
         }
 

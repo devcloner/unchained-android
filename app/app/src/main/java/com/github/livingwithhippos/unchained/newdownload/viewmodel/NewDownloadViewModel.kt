@@ -8,9 +8,11 @@ import com.github.livingwithhippos.unchained.data.model.UnchainedNetworkExceptio
 import com.github.livingwithhippos.unchained.data.model.UploadedTorrent
 import com.github.livingwithhippos.unchained.data.repository.HostsRepository
 import com.github.livingwithhippos.unchained.data.repository.TorrentsRepository
+import com.github.livingwithhippos.unchained.data.repository.DebridLinkRepository
 import com.github.livingwithhippos.unchained.data.repository.UnrestrictRepository
 import com.github.livingwithhippos.unchained.utilities.EitherResult
 import com.github.livingwithhippos.unchained.utilities.Event
+import com.github.livingwithhippos.unchained.utilities.extension.isMagnet
 import com.github.livingwithhippos.unchained.utilities.postEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.regex.Matcher
@@ -27,6 +29,7 @@ constructor(
     private val unrestrictRepository: UnrestrictRepository,
     private val torrentsRepository: TorrentsRepository,
     private val hostsRepository: HostsRepository,
+    private val debridLinkRepository: DebridLinkRepository,
 ) : ViewModel() {
 
     // use Event since navigating back to this fragment would trigger this observable again
@@ -35,6 +38,26 @@ constructor(
     val networkExceptionLiveData = MutableLiveData<Event<UnchainedNetworkException>>()
     val linkLiveData = MutableLiveData<Event<Link>>()
     val toastLiveData = MutableLiveData<Event<String>>()
+    val debridLinkResult = MutableLiveData<Event<DebridLinkAddResult>>()
+
+    fun sendMagnetToDebridLink(magnet: String) {
+        if (!magnet.isMagnet()) {
+            debridLinkResult.postEvent(DebridLinkAddResult.InvalidMagnet)
+            return
+        }
+        if (!debridLinkRepository.isConfigured()) {
+            debridLinkResult.postEvent(DebridLinkAddResult.MissingKey)
+            return
+        }
+        viewModelScope.launch {
+            when (debridLinkRepository.addMagnet(magnet)) {
+                is EitherResult.Success -> debridLinkResult.postEvent(DebridLinkAddResult.Added)
+                is EitherResult.Failure -> debridLinkResult.postEvent(DebridLinkAddResult.Failed)
+            }
+        }
+    }
+
+    fun isDebridLinkConfigured() = debridLinkRepository.isConfigured()
 
     fun fetchUnrestrictedLink(link: String, password: String?, remote: Int? = null) {
         viewModelScope.launch {
@@ -111,6 +134,13 @@ constructor(
     fun postMessage(message: String) {
         toastLiveData.postEvent(message)
     }
+}
+
+sealed class DebridLinkAddResult {
+    data object Added : DebridLinkAddResult()
+    data object Failed : DebridLinkAddResult()
+    data object MissingKey : DebridLinkAddResult()
+    data object InvalidMagnet : DebridLinkAddResult()
 }
 
 sealed class Link {

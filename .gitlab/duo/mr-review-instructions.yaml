@@ -1,0 +1,32 @@
+instructions:
+  - name: Android and Kotlin correctness
+    fileFilters:
+      - "app/**/*.kt"
+      - "app/**/*.kts"
+    instructions: |
+      1. Reject changes that break Real-Debrid while adding another provider.
+      2. Require tests for provider response envelopes, malformed data, and failure paths.
+      3. Flag blocking I/O on the main thread, unsafe null assertions, and unstructured coroutines.
+      4. Check that DTO JSON names match the documented API exactly.
+      5. Prefer provider-neutral viewmodel interfaces over provider conditionals in UI code.
+
+  - name: Debrid credentials and privacy
+    fileFilters:
+      - "app/**/*.kt"
+      - "app/**/*.xml"
+      - ".gitlab-ci.yml"
+    instructions: |
+      1. Block API keys, bearer tokens, refresh tokens, magnet contents, signed URLs, or user data in source, logs, URLs, tests, artifacts, and CI variables with non-masked values.
+      2. Require Authorization headers for credentials and redaction in HTTP logging.
+      3. Require input validation for shared magnets, torrent files, and hoster links.
+      4. Flag cleartext traffic or exported components that accept untrusted input without validation.
+
+  - name: GitLab CI
+    fileFilters:
+      - ".gitlab-ci.yml"
+      - ".gitlab/**/*.yml"
+      - ".gitlab/**/*.yaml"
+    instructions: |
+      1. Pin build images, cache only dependency data, and avoid caching credentials.
+      2. Preserve unit tests, lint, and debug APK artifacts.
+      3. Never echo secrets or weaken jobs to allow failures silently.

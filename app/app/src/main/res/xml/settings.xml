@@ -212,6 +212,15 @@
 
     <PreferenceCategory android:title="@string/title_various">
 
+        <EditTextPreference
+            android:key="debrid_link_api_key"
+            android:title="@string/debrid_link_api_key_title"
+            android:summary="@string/debrid_link_key_summary"
+            android:persistent="false" />
+        <Preference
+            android:key="debrid_link_remove"
+            android:title="@string/debrid_link_remove_key" />
+
         <Preference
             android:key="user_logout"
             app:title="@string/logout" />

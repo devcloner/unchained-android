@@ -1,0 +1,26 @@
+image: ghcr.io/cirruslabs/android-sdk:36
+
+setup_script:
+  - cd app && ./gradlew --version
+
+cache:
+  key:
+    files:
+      - app/gradle/libs.versions.toml
+      - app/gradle/wrapper/gradle-wrapper.properties
+    prefix: android-gradle
+  paths:
+    - .gradle/caches/
+    - .gradle/wrapper/
+
+network_policy:
+  include_recommended_allowed: true
+  allowed_domains:
+    - dl.google.com
+    - services.gradle.org
+    - plugins.gradle.org
+    - repo1.maven.org
+    - repo.maven.apache.org
+    - maven.google.com
+    - github.com
+    - api.github.com

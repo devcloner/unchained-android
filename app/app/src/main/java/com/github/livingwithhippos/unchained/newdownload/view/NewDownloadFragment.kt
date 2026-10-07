@@ -25,6 +25,7 @@ import com.github.livingwithhippos.unchained.data.model.NetworkError
 import com.github.livingwithhippos.unchained.databinding.NewDownloadFragmentBinding
 import com.github.livingwithhippos.unchained.lists.view.ListState
 import com.github.livingwithhippos.unchained.newdownload.viewmodel.Link
+import com.github.livingwithhippos.unchained.newdownload.viewmodel.DebridLinkAddResult
 import com.github.livingwithhippos.unchained.newdownload.viewmodel.NewDownloadViewModel
 import com.github.livingwithhippos.unchained.statemachine.authentication.FSMAuthenticationEvent
 import com.github.livingwithhippos.unchained.statemachine.authentication.FSMAuthenticationState
@@ -86,6 +87,19 @@ class NewDownloadFragment : UnchainedFragment() {
     }
 
     private fun setupObservers(binding: NewDownloadFragmentBinding) {
+        viewModel.debridLinkResult.observe(
+            viewLifecycleOwner,
+            EventObserver { result ->
+                val message = when (result) {
+                    DebridLinkAddResult.Added -> R.string.debrid_link_add_success
+                    DebridLinkAddResult.Failed -> R.string.debrid_link_add_error
+                    DebridLinkAddResult.MissingKey -> R.string.debrid_link_no_key
+                    DebridLinkAddResult.InvalidMagnet -> R.string.debrid_link_invalid_magnet
+                }
+                viewModel.postMessage(getString(message))
+                binding.bDebridLink.isEnabled = true
+            },
+        )
 
         viewModel.downloadLiveData.observe(
             viewLifecycleOwner,
@@ -262,6 +276,11 @@ class NewDownloadFragment : UnchainedFragment() {
     }
 
     private fun setupClickListeners(binding: NewDownloadFragmentBinding) {
+        binding.bDebridLink.setOnClickListener {
+            val magnet = binding.tiLink.text?.toString()?.trim().orEmpty()
+            binding.bDebridLink.isEnabled = false
+            viewModel.sendMagnetToDebridLink(magnet)
+        }
         // add the unrestrict button listener
         binding.bUnrestrict.setOnClickListener {
             val authState = activityViewModel.getAuthenticationMachineState()
@@ -443,11 +462,10 @@ class NewDownloadFragment : UnchainedFragment() {
         args.externalUri?.let { link ->
             when (link.scheme) {
                 SCHEME_MAGNET -> {
-                    viewModel.postMessage(getString(R.string.loading_magnet_link))
-                    // set as text input text
+                    // set as text input text; explicit button sends to the selected provider.
                     binding.tiLink.setText(link.toString(), TextView.BufferType.EDITABLE)
-                    // simulate button click
-                    binding.bUnrestrict.performClick()
+                    if (viewModel.isDebridLinkConfigured()) binding.bDebridLink.performClick()
+                    else binding.bUnrestrict.performClick()
                 }
 
                 SCHEME_CONTENT,
