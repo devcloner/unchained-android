@@ -16,12 +16,16 @@ import coil.load
 import com.github.livingwithhippos.unchained.R
 import com.github.livingwithhippos.unchained.base.UnchainedFragment
 import com.github.livingwithhippos.unchained.data.model.User
+import com.github.livingwithhippos.unchained.data.repository.DebridLinkRepository
 import com.github.livingwithhippos.unchained.databinding.FragmentUserProfileBinding
 import com.github.livingwithhippos.unchained.settings.view.SettingsActivity
 import com.github.livingwithhippos.unchained.settings.view.SettingsFragment.Companion.KEY_REFERRAL_ASKED
 import com.github.livingwithhippos.unchained.settings.view.SettingsFragment.Companion.KEY_REFERRAL_USE
 import com.github.livingwithhippos.unchained.statemachine.authentication.FSMAuthenticationState
 import com.github.livingwithhippos.unchained.utilities.ACCOUNT_LINK
+import com.github.livingwithhippos.unchained.utilities.DEBRID_PROVIDER_PREF_KEY
+import com.github.livingwithhippos.unchained.utilities.DebridProvider
+import com.github.livingwithhippos.unchained.utilities.EitherResult
 import com.github.livingwithhippos.unchained.utilities.REFERRAL_LINK
 import com.github.livingwithhippos.unchained.utilities.extension.openExternalWebPage
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -32,6 +36,9 @@ import kotlinx.coroutines.launch
 /** A simple [UnchainedFragment] subclass. Shows a user profile details. */
 @AndroidEntryPoint
 class UserProfileFragment : UnchainedFragment() {
+
+    @Inject
+    lateinit var debridLinkRepository: DebridLinkRepository
 
     @Inject lateinit var preferences: SharedPreferences
 
@@ -50,19 +57,51 @@ class UserProfileFragment : UnchainedFragment() {
         _binding = FragmentUserProfileBinding.inflate(inflater, container, false)
         val view = binding.root
 
-        val user: User? = activityViewModel.getCachedUser()
-        if (user == null) {
-            activityViewModel.fetchUser()
+        val isDebridLink =
+            preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.REAL_DEBRID.id) ==
+                DebridProvider.DEBRID_LINK.id
+
+        if (isDebridLink && debridLinkRepository.isConfigured()) {
+            binding.tvLoginDescription.text = "Debrid-Link API Key"
+            lifecycleScope.launch {
+                when (val account = debridLinkRepository.getAccountInfos()) {
+                    is EitherResult.Success -> {
+                        val acc = account.success
+                        binding.tvName.text = acc.username ?: "Debrid-Link User"
+                        binding.tvMail.text = acc.email ?: ""
+                        val isPremium = (acc.accountType ?: 0) >= 1 || (acc.premiumLeft ?: 0L) > 0L
+                        if (isPremium) {
+                            binding.tvPremium.text = getString(R.string.premium)
+                        } else {
+                            binding.tvPremium.text = getString(R.string.not_premium)
+                        }
+                        val days = ((acc.premiumLeft ?: 0L) / 86400L).coerceAtLeast(0L)
+                        val pts = (acc.points ?: 0L).toInt()
+                        binding.tvPremiumDays.text = getString(R.string.premium_days_format, days)
+                        binding.tvPoints.text = getString(R.string.premium_points_format, pts)
+                        binding.pointsBar.setProgressCompat(pts.coerceIn(0, 1000), true)
+                    }
+                    is EitherResult.Failure -> {
+                        binding.tvName.text = "Debrid-Link"
+                        binding.tvPremium.text = getString(R.string.debrid_link_api_key_title)
+                    }
+                }
+            }
         } else {
-            populateUserView(user)
-        }
-        lifecycleScope.launch {
-            if (activityViewModel.isTokenPrivate()) {
-                if (_binding == null) return@launch
-                binding.tvLoginDescription.text = getString(R.string.login_type_private)
+            val user: User? = activityViewModel.getCachedUser()
+            if (user == null) {
+                activityViewModel.fetchUser()
             } else {
-                if (_binding == null) return@launch
-                binding.tvLoginDescription.text = getString(R.string.login_type_open)
+                populateUserView(user)
+            }
+            lifecycleScope.launch {
+                if (activityViewModel.isTokenPrivate()) {
+                    if (_binding == null) return@launch
+                    binding.tvLoginDescription.text = getString(R.string.login_type_private)
+                } else {
+                    if (_binding == null) return@launch
+                    binding.tvLoginDescription.text = getString(R.string.login_type_open)
+                }
             }
         }
 
