@@ -81,14 +81,26 @@ No existing Debrid-Link fork could be used as a base, so this work starts from c
 - [ ] Rename/rebrand the fork without breaking package upgrades during development.
 - [ ] Add Compose/provider UI incrementally; do not rewrite working screens wholesale.
 
-### Quality, CI, release
+## Quality, CI, release
 
-- [x] Add GitLab CI and GitLab Duo configuration/review policy.
-- [ ] Build on API 37 and run unit/lint jobs locally and in GitLab.
+- [x] GitLab repository, Duo auto-review toggle, CI configuration and review policy pushed.
+- [x] CI debug APK built for commit `dc8aa489` (job `17004427541`; artifact verified as a valid ZIP containing `debug-1.8.1-dev.apk`).
+- [x] CI lint passed for commit `dc8aa489` (job `17004427540`).
+- [x] New Debrid-Link unit tests compiled and ran on CI (9 of 10 total tests passed; the other was an upstream Robolectric SDK mismatch).
+- [ ] Re-run unit tests after pinning `StringResourceTest` to Robolectric-supported SDK 35; require a green pipeline.
+- [ ] Confirm Duo actually posts a review on MR !1; the enabled toggle alone does not prove a review ran.
 - [ ] Add MockWebServer contract tests from sanitized Debrid-Link fixtures.
 - [ ] Add instrumented tests for share intents and provider switching.
-- [ ] Add an unsigned debug APK artifact and documented reproducible release process.
-- [ ] Complete privacy/security review before exposing the API-key UI.
+- [ ] Complete privacy/security review before exposing the API-key UI to production.
+- [ ] Document a reproducible signed release process; debug builds are already signed with the Android debug key.
+
+## Next development slices
+
+- [ ] Provider selection and credential storage that does not affect Real-Debrid logins.
+- [ ] Verify Debrid-Link API behavior against sanitized contract responses; no live key in tests/logs.
+- [ ] Upload shared `.torrent` documents to Debrid-Link, route hoster links, and add clipboard detection.
+- [ ] Expose Debrid-Link seedbox list, file browser, streaming and signed-link expiry refresh.
+- [ ] Route plugin search magnets through the selected provider without breaking Real-Debrid.
 
 ## Security rules
 

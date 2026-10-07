@@ -8,6 +8,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
+@Config(sdk = [35]) // ponytail: Robolectric 4.16.1 supports API 35; lift when it supports 37.
 class StringResourceTest {
 
     @Test
