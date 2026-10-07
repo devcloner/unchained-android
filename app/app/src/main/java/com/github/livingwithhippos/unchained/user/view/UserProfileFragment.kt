@@ -71,6 +71,9 @@ class UserProfileFragment : UnchainedFragment() {
             binding.bAccount.setOnClickListener {
                 context?.openExternalWebPage("https://debrid-link.com/webapp/apikey")
             }
+            binding.cvPremium.setOnClickListener {
+                context?.openExternalWebPage("https://debrid-link.com/webapp/apikey")
+            }
             if (debridLinkRepository.isConfigured()) {
                 lifecycleScope.launch {
                     when (val account = debridLinkRepository.getAccountInfos()) {

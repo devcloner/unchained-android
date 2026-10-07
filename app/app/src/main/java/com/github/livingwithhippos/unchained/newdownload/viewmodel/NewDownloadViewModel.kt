@@ -54,9 +54,21 @@ constructor(
             return
         }
         viewModelScope.launch {
-            when (debridLinkRepository.addMagnet(magnet)) {
+            val trimmed = magnet.trim()
+            val target = if (trimmed.matches("^[a-fA-F0-9]{40}$".toRegex()) || trimmed.matches("^[a-zA-Z2-7]{32}$".toRegex())) {
+                "magnet:?xt=urn:btih:$trimmed"
+            } else trimmed
+
+            when (val res = debridLinkRepository.addMagnet(target)) {
                 is EitherResult.Success -> debridLinkResult.postEvent(DebridLinkAddResult.Added)
-                is EitherResult.Failure -> debridLinkResult.postEvent(DebridLinkAddResult.Failed)
+                is EitherResult.Failure -> {
+                    val err = (res.failure as? com.github.livingwithhippos.unchained.data.model.DebridLinkError)?.error
+                    if (!err.isNullOrBlank()) {
+                        debridLinkResult.postEvent(DebridLinkAddResult.FailedWithError(err))
+                    } else {
+                        debridLinkResult.postEvent(DebridLinkAddResult.Failed)
+                    }
+                }
             }
         }
     }
@@ -174,6 +186,7 @@ sealed class DebridLinkAddResult {
     data object HostAdded : DebridLinkAddResult()
     data object TorrentAdded : DebridLinkAddResult()
     data object Failed : DebridLinkAddResult()
+    data class FailedWithError(val error: String) : DebridLinkAddResult()
     data object MissingKey : DebridLinkAddResult()
     data object InvalidMagnet : DebridLinkAddResult()
 }

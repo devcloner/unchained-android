@@ -92,13 +92,19 @@ class NewDownloadFragment : UnchainedFragment() {
             viewLifecycleOwner,
             EventObserver { result ->
                 val message = when (result) {
-                    DebridLinkAddResult.Added -> R.string.debrid_link_add_success
-                    DebridLinkAddResult.HostAdded -> R.string.debrid_link_host_success
-                    DebridLinkAddResult.TorrentAdded -> R.string.debrid_link_torrent_success
-                    DebridLinkAddResult.Failed -> R.string.debrid_link_add_error
-                    DebridLinkAddResult.MissingKey -> R.string.debrid_link_no_key
-                    DebridLinkAddResult.InvalidMagnet -> R.string.debrid_link_invalid_magnet
-                }
+     DebridLinkAddResult.Added -> R.string.debrid_link_add_success
+     DebridLinkAddResult.HostAdded -> R.string.debrid_link_host_success
+     DebridLinkAddResult.TorrentAdded -> R.string.debrid_link_torrent_success
+     is DebridLinkAddResult.FailedWithError -> {
+         viewModel.postMessage("Debrid-Link: ${result.error}")
+         enableButtons(binding, true)
+         binding.bDebridLink.isEnabled = true
+         return@EventObserver
+     }
+     DebridLinkAddResult.Failed -> R.string.debrid_link_add_error
+     DebridLinkAddResult.MissingKey -> R.string.debrid_link_no_key
+     DebridLinkAddResult.InvalidMagnet -> R.string.debrid_link_invalid_magnet
+ }
                 viewModel.postMessage(getString(message))
                 enableButtons(binding, true)
                 binding.bDebridLink.isEnabled = true

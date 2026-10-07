@@ -78,24 +78,37 @@ class SearchItemFragment : UnchainedFragment(), LinkItemListener {
         adapter.submitList(links)
     }
 
-    private fun sendToDebridLink(url: String) {
+    private fun sendToDebridLink(rawUrl: String) {
         if (!debridLinkRepository.isConfigured()) {
             context?.showToast(R.string.debrid_link_no_key)
             return
         }
+        val url = rawUrl.trim()
         context?.showToast(R.string.loading_torrent_file)
         lifecycleScope.launch {
-            val result = if (url.startsWith("http://", ignoreCase = true) || url.startsWith("https://", ignoreCase = true)) {
-                if (url.endsWith(".torrent", ignoreCase = true)) {
+            val result = when {
+                url.startsWith("magnet:?", ignoreCase = true) -> {
                     debridLinkRepository.addMagnet(url)
-                } else {
-                    when (val hostRes = debridLinkRepository.addHostLink(url)) {
-                        is EitherResult.Success -> EitherResult.Success(hostRes.success.id)
-                        is EitherResult.Failure -> EitherResult.Failure(hostRes.failure)
+                }
+                url.matches("^[a-fA-F0-9]{40}$".toRegex()) || url.matches("^[a-zA-Z2-7]{32}$".toRegex()) -> {
+                    debridLinkRepository.addMagnet("magnet:?xt=urn:btih:$url")
+                }
+                url.startsWith("http://", ignoreCase = true) || url.startsWith("https://", ignoreCase = true) -> {
+                    if (url.endsWith(".torrent", ignoreCase = true) || url.contains(".torrent?")) {
+                        debridLinkRepository.addMagnet(url)
+                    } else {
+                        when (val hostRes = debridLinkRepository.addHostLink(url)) {
+                            is EitherResult.Success -> EitherResult.Success(hostRes.success.id)
+                            is EitherResult.Failure -> {
+                                // Fallback to seedbox add in case it's a torrent web URL
+                                debridLinkRepository.addMagnet(url)
+                            }
+                        }
                     }
                 }
-            } else {
-                debridLinkRepository.addMagnet(url)
+                else -> {
+                    debridLinkRepository.addMagnet(url)
+                }
             }
 
             when (result) {
@@ -103,7 +116,12 @@ class SearchItemFragment : UnchainedFragment(), LinkItemListener {
                     context?.showToast(R.string.debrid_link_add_success)
                 }
                 is EitherResult.Failure -> {
-                    context?.showToast(R.string.debrid_link_add_error)
+                    val err = (result.failure as? com.github.livingwithhippos.unchained.data.model.DebridLinkError)?.error
+                    if (!err.isNullOrBlank()) {
+                        context?.showToast("Debrid-Link: $err")
+                    } else {
+                        context?.showToast(R.string.debrid_link_add_error)
+                    }
                 }
             }
         }
