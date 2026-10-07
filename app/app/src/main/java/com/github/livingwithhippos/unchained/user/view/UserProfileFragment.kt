@@ -59,10 +59,15 @@ class UserProfileFragment : UnchainedFragment() {
 
         val isDebridLink =
             preferences.getString(DEBRID_PROVIDER_PREF_KEY, DebridProvider.REAL_DEBRID.id) ==
-                DebridProvider.DEBRID_LINK.id
+                DebridProvider.DEBRID_LINK.id || debridLinkRepository.isConfigured()
 
         if (isDebridLink && debridLinkRepository.isConfigured()) {
-            binding.tvLoginDescription.text = "Debrid-Link API Key"
+            binding.tvDescription.text = getString(R.string.auth_with_debrid_link)
+            binding.tvLoginDescription.text = getString(R.string.auth_with_debrid_link)
+            binding.bAccount.text = "Debrid-Link"
+            binding.bAccount.setOnClickListener {
+                context?.openExternalWebPage("https://debrid-link.com/webapp/seedbox")
+            }
             lifecycleScope.launch {
                 when (val account = debridLinkRepository.getAccountInfos()) {
                     is EitherResult.Success -> {

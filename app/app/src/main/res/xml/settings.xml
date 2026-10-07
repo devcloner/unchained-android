@@ -129,6 +129,29 @@
             android:title="@string/pick_doh_provider"
             app:useSimpleSummaryProvider="true" />
 
+        <PreferenceCategory android:title="@string/torrent_search_providers">
+            <SwitchPreference
+                android:defaultValue="true"
+                app:key="search_provider_torrentscsv"
+                app:title="TorrentsCSV" />
+            <SwitchPreference
+                android:defaultValue="true"
+                app:key="search_provider_piratebay"
+                app:title="The Pirate Bay (apibay)" />
+            <SwitchPreference
+                android:defaultValue="true"
+                app:key="search_provider_limetorrents"
+                app:title="LimeTorrents" />
+            <SwitchPreference
+                android:defaultValue="true"
+                app:key="search_provider_eztv"
+                app:title="EZTV" />
+            <SwitchPreference
+                android:defaultValue="true"
+                app:key="search_provider_1337x"
+                app:title="1337x" />
+        </PreferenceCategory>
+
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/ui_settings">

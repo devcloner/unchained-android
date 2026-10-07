@@ -16,6 +16,8 @@
     <string name="debrid_link_clipboard_detected" translatable="false">Magnet detected from clipboard</string>
     <string name="send_to_debrid_link" translatable="false">Download with Debrid-Link</string>
     <string name="send_to_real_debrid" translatable="false">Download with Real-Debrid</string>
+    <string name="torrent_search_providers" translatable="false">Torrent search providers</string>
+    <string name="auth_with_debrid_link" translatable="false">Authenticated with Debrid-Link</string>
     <string name="google" translatable="false">Google</string>
     <string name="cloudflare" translatable="false">Cloudflare</string>
     <string name="quad9" translatable="false">Quad9</string>

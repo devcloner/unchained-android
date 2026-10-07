@@ -287,8 +287,23 @@ class NewDownloadFragment : UnchainedFragment() {
         }
         // add the unrestrict button listener
         binding.bUnrestrict.setOnClickListener {
+            val linkText = binding.tiLink.text?.toString()?.trim().orEmpty()
+            val isDebridLinkActive = viewModel.getSelectedProvider() == DebridProvider.DEBRID_LINK || viewModel.isDebridLinkConfigured()
+
+            if (isDebridLinkActive && linkText.isNotBlank()) {
+                if (linkText.isMagnet() || linkText.isTorrent()) {
+                    binding.bDebridLink.isEnabled = false
+                    enableButtons(binding, false)
+                    viewModel.sendMagnetToDebridLink(linkText)
+                    return@setOnClickListener
+                } else if (linkText.isWebUrl() || linkText.isSimpleWebUrl()) {
+                    enableButtons(binding, false)
+                    viewModel.sendHostLinkToDebridLink(linkText)
+                    return@setOnClickListener
+                }
+            }
+
             val authState = activityViewModel.getAuthenticationMachineState()
-            val isDebridLinkActive = viewModel.getSelectedProvider() == DebridProvider.DEBRID_LINK
             val isAuthed =
                 authState is FSMAuthenticationState.AuthenticatedPrivateToken ||
                     authState is FSMAuthenticationState.AuthenticatedOpenToken ||

@@ -81,15 +81,15 @@ android {
         // use local file if available or Environment variables (for CI)
         create("release") {
             if (keyPropertiesFile.exists()) {
-                storeFile = file(keyProperties["store"] as String? ?: "release.pfk")
+                storeFile = file(keyProperties["store"] as String? ?: "release.jks")
                 storePassword = keyProperties["releaseStorePassword"] as String
                 keyAlias = keyProperties["keyAlias"] as String
                 keyPassword = keyProperties["releaseStorePassword"] as String
             } else {
-                storeFile = file(System.getenv("KEYSTORE") ?: "release.pfk")
-                storePassword = System.getenv("KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("KEY_ALIAS")
-                keyPassword = System.getenv("KEY_PASSWORD")
+                storeFile = file(System.getenv("KEYSTORE") ?: "release.jks")
+                storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "unchained123"
+                keyAlias = System.getenv("KEY_ALIAS") ?: "unchained"
+                keyPassword = System.getenv("KEY_PASSWORD") ?: "unchained123"
             }
         }
     }

@@ -46,7 +46,8 @@ class BuiltinSearchEngineTest {
         }
 
         val client = OkHttpClient.Builder().addInterceptor(interceptor).build()
-        val engine = BuiltinSearchEngine(client)
+        val prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(org.robolectric.RuntimeEnvironment.getApplication())
+        val engine = BuiltinSearchEngine(client, prefs)
         val results = engine.search("ubuntu")
 
         assertTrue(results.isNotEmpty())
