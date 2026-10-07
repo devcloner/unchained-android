@@ -76,6 +76,11 @@ No existing Debrid-Link fork could be used as a base, so this work starts from c
 
 ### Search and UX
 
+- [x] Integrate TorrentSearch providers (TorrentsCSV and The Pirate Bay JSON APIs) as built-in search.
+- [x] Add direct download chooser on search items (Debrid-Link vs Real-Debrid vs Copy).
+- [x] Expose Debrid-Link account info screen (premium status, days remaining, points).
+- [x] Add seedbox multi-file folder browser for Debrid-Link torrents.
+- [x] Post automated AI architecture & code review on GitLab MR !1 and GitHub PR #1.
 - [ ] Keep Unchained's plugin search and add a provider-aware “Send magnet” action.
 - [ ] Add Torznab/Jackett/Prowlarr search configuration validation.
 - [ ] Rename/rebrand the fork without breaking package upgrades during development.
