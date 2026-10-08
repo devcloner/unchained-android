@@ -83,7 +83,7 @@ jobs:
           settings: |-
             {
               "model": {
-                "maxSessionTurns": 25
+                "maxSessionTurns": 40
               },
               "telemetry": {
                 "enabled": true,
@@ -112,13 +112,14 @@ jobs:
                 }
               },
               "tools": {
-                "core": [
-                  "read_file",
-                  "search_file_content",
-                  "glob",
-                  "list_directory",
-                  "write_todos",
-                  "activate_skill"
+                "exclude": [
+                  "run_shell_command",
+                  "write_file",
+                  "replace",
+                  "web_fetch",
+                  "google_web_search",
+                  "enter_plan_mode",
+                  "invoke_agent"
                 ]
               }
             }

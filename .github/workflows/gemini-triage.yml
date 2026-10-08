@@ -104,12 +104,14 @@ jobs:
                 "outfile": ".gemini/telemetry.log"
               },
               "tools": {
-                "core": [
-                  "read_file",
-                  "search_file_content",
-                  "glob",
-                  "list_directory",
-                  "write_todos"
+                "exclude": [
+                  "run_shell_command",
+                  "write_file",
+                  "replace",
+                  "web_fetch",
+                  "google_web_search",
+                  "enter_plan_mode",
+                  "invoke_agent"
                 ]
               }
             }
