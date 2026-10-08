@@ -112,7 +112,13 @@ jobs:
                 }
               },
               "tools": {
-                "core": []
+                "core": [
+                  "read_file",
+                  "search_file_content",
+                  "glob",
+                  "list_directory",
+                  "write_todos"
+                ]
               }
             }
           extensions: |
