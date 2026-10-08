@@ -96,8 +96,3 @@ app/apikey.properties
 /extra_assets/docker/jackett/data
 /extra_assets/docker/prowlarr
 *.salive
-
-# Gemini CLI runtime state (see .github/workflows/gemini-*.yml)
-.gemini/settings.json
-.gemini/telemetry.log
-.gemini/context.json
