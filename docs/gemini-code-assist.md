@@ -44,3 +44,10 @@ pins the CLI.
 Changing the model is a variable change: probe the candidate first, since Vertex publishes different
 model ids per region and `404 ... was not found or your project does not have access to it` means the
 id is unavailable, not that credentials are wrong.
+
+## Version pin
+
+`GEMINI_CLI_VERSION` pins the CLI deliberately: the reviewer's read-only posture comes from
+`tools.exclude`, which is deprecated in favour of the Policy Engine and is scheduled for removal in
+CLI 1.0. Bump the pin only together with a fresh look at the reviewer's tool list, since a CLI that
+drops `tools.exclude` would hand the reviewer shell and write access again.
