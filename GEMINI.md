@@ -37,6 +37,14 @@ remove an existing check to make a change pass.
 - Add tests for success envelopes, failure envelopes, empty bodies, malformed input, and unknown JSON.
 - Preserve Real-Debrid behaviour and add regression coverage when touching shared code.
 
+## Code review
+
+A review of a pull request must follow `.gemini/styleguide.md`. Prefix every finding with its severity
+label — `[BLOCKER]`, `[MAJOR]`, `[MINOR]` or `[QUESTION]` — cite `path:line`, describe the concrete
+failure (the input that produces wrong behaviour), and give the minimal fix. Do not comment on
+formatting or lint: Android Lint and the Gradle build enforce those. If the change is sound, say so in
+one line and stop.
+
 ## Working style
 
 Keep changes small and reviewable. Prefer a vertical slice with tests over a broad rewrite. Include

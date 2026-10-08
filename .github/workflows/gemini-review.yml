@@ -117,7 +117,8 @@ jobs:
                   "search_file_content",
                   "glob",
                   "list_directory",
-                  "write_todos"
+                  "write_todos",
+                  "activate_skill"
                 ]
               }
             }
@@ -125,12 +126,4 @@ jobs:
             [
               "https://github.com/gemini-cli-extensions/code-review"
             ]
-          prompt: |
-            /pr-code-review
-
-            Apply the review contract in `.gemini/styleguide.md` and the project rulebook in `GEMINI.md`
-            (identical to `AGENTS.md` and `CLAUDE.md`). Prefix every finding with its severity label:
-            [BLOCKER], [MAJOR], [MINOR] or [QUESTION]. Cite `path:line`, describe the concrete failure
-            (input that produces wrong behaviour), and give the minimal fix. Do not comment on
-            formatting or lint — Android Lint and the Gradle build enforce those. If the change is sound,
-            say so in one line and stop.
+          prompt: '/pr-code-review'
